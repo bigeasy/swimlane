@@ -1,0 +1,17 @@
+SWIMLANE
+
+A visual web editor that is fun to use.
+
+    Home: http://bigeasy.github.com/node-packet
+    Source: http://github.com/bigeasy/node-packet
+    Documentation: http://github.com/bigeasy/node-packet/wiki
+
+    Issues: http://github.com/bigeasy/node-packet/issues
+
+    License: The MIT License
+
+PURPOSE
+
+Find the compromise between markup languages and word processors. Swimlane has a
+little rich edit control that allows you to style text, but works within a
+larger framework that defines the structure of the document.
