@@ -19,14 +19,33 @@
 <script src="jquery.js"></script>
 <script src="../src/swimlane.js"></script>
 <script type="text/javascript">
+  function path (prefix) {
+      var path = [];
+      var anchor =  window.getSelection().anchorNode.parentNode;
+      var isSwimlane = $("#swimlane")[0] == anchor;
+      while (anchor != null) {
+        path.push(anchor.tagName);
+        anchor = anchor.parentNode; 
+      }
+      path.reverse();
+      $("<div>" + prefix + " : " + isSwimlane + " : " + path.join(" &raquo; ") + "</div>").appendTo("#path");
+  }
   $(function () {
     var swimlane = new Swimlane({ selector: "#swimlane" });
     $("#toggle").click(function () {
       swimlane.toggle();
       return false;
     });
-    $(document).keyup(function (e) {
+    $("#normalize").click(function () {
       swimlane.normalize();
+      $("#html").text($("#swimlane").html());  
+    });
+    $("#insert").click(function () {
+      document.execCommand("insertParagraph", false, null);
+    });
+    $("#swimlane").keyup(function (e) {
+      var editable = $("#swimlane");
+      setTimeout(function () { path("tick") }, 1);
       $("#html").text($("#swimlane").html());  
     });
   });
@@ -34,12 +53,16 @@
 </head>
 <body>
 <div id="content">
-Content immediately after. <a id="toggle" href="#">Toggle</a>.
+Content immediately after.
+  <a id="toggle" href="#">Toggle</a>.
+  <a href="#" id="normalize">Normalize</a>.
+  <a href="#" id="insert">Insert Paragraph</a>.
 <div id="swimlane">
 Content that is not correctly nested.
 <p>Content <img
 src="http://farm1.static.flickr.com/52/147722422_4b36ce3c06_t_d.jpg"
 height="100" width="67"> that is correctly nested.</p>
+<p>
 <ul>
 <li>List item.
 <li>List item.
@@ -48,6 +71,8 @@ height="100" width="67"> that is correctly nested.</p>
 Content immediately after.
 <pre id="html">
 </pre>
+<div id="path">
+</div>
 </div>
 </body>
 </html>

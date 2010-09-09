@@ -13,22 +13,53 @@
     toggle: function () {
       var value = $(this.selector).attr("contentEditable");
       if (value == "false" || value == "inherit") {
-        var n = new Swimlane.Normalizer(document, $(this.selector)[0]);
-        n.normalize({ start: null, stop: null });
         disabledValue = value;
         $(this.selector)[0].setAttribute("contentEditable", "true");
       } else {
-        var n = new Swimlane.Normalizer(document, $(this.selector)[0]);
-        n.normalize({ start: null, stop: null });
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
       }
+      var swimlane = this;
+      $(this.selector).keyup(function (e) {
+        swimlane.keyup(e);
+      });
     },
     editing: function () {
       return $(this.selector).attr("contentEditable") == "true";
     },
     normalize: function() {
+      var n = new Swimlane.Normalizer(document, $(this.selector)[0]);
+      n.normalize({ start: null, stop: null });
     }
   };
+
+  if ($.browser.webkit) {
+    $.extend(Swimlane.prototype, {
+      keyup: function (e) {
+        if (e.keyCode == 13) {
+          var editable = $(this.selector)[0];
+          var anchorNode = window.getSelection().anchorNode;
+          if (anchorNode.tagName == "DIV") { //  && parentNode == editable) {
+            var p = $("<p><br></p>").insertAfter($(anchorNode))[0];
+            window.getSelection().selectAllChildren(editable);
+            window.getSelection().collapse(p, 0);
+            $(anchorNode).remove();
+          }
+        }
+      }
+    });
+  } else if ($.browser.mozilla) {
+    $.extend(Swimlane.prototype, {
+      keyup: function (e) {
+        if (e.keyCode == 13) {
+          var parentNode = window.getSelection().anchorNode.parentNode;
+          if (parentNode == $(this.selector)[0].parentNode) {
+            document.execCommand("insertParagraph", false, null);
+          }
+        }
+      }
+    });
+  } 
+
   Swimlane.Normalizer = function(doc, body) {
         var self = {
             inlines: /sub|strong|em|br/i,
