@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Swimlane Demonstration</title>
+<style type="text/css">
+  body {
+    background: #f0f0f0;
+    text-align: center;
+  }
+  #content {
+    margin: auto auto;
+    text-align: left;
+    width: 400px;
+  }
+  div[contentEditable="true"] {
+    border: 1px solid red;
+  }
+</style>
+<script src="jquery.js"></script>
+<script src="../src/swimlane.js"></script>
+<script type="text/javascript">
+  $(function () {
+    var swimlane = new Swimlane({ selector: "#swimlane" });
+    $("#toggle").click(function () {
+      swimlane.toggle();
+      return false;
+    });
+    $(document).keyup(function (e) {
+      swimlane.normalize();
+      $("#html").text($("#swimlane").html());  
+    });
+  });
+</script>
+</head>
+<body>
+<div id="content">
+Content immediately after. <a id="toggle" href="#">Toggle</a>.
+<div id="swimlane">
+Content that is not correctly nested.
+<p>Content <img
+src="http://farm1.static.flickr.com/52/147722422_4b36ce3c06_t_d.jpg"
+height="100" width="67"> that is correctly nested.</p>
+<ul>
+<li>List item.
+<li>List item.
+</ul>
+</div>
+Content immediately after.
+<pre id="html">
+</pre>
+</div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->
