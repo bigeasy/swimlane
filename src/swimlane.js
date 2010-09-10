@@ -4,40 +4,25 @@
 //
 (function () {
   window.Swimlane = function Swimlane (options) {
-    $.extend(this, options);
-    return this; 
+    return $.extend(this, options);
   }
-  
   var disabledValue;
   Swimlane.prototype = {
     toggle: function () {
       var swimlane = this;
-      function keyup (e) { swimlane.keyup(e); }
+      var rebind = {};
+      $.each("keyup".split(/\s+/), function (index, value) {
+        rebind[value] = function (e) { alert("gerg"); return swimlane[value](e); };
+      });
       var value = $(this.selector).attr("contentEditable");
       if (value == "false" || value == "inherit") {
-        $(this.selector).keyup(keyup);
+        $.each(rebind, function (key, value) { $(this.selector).bind(key, value); });
         disabledValue = value;
         $(this.selector)[0].setAttribute("contentEditable", "true");
       } else {
-        $(this.selector).unbind("keyup", keyup);
+        $.each(rebind, function (key, value) { $(this.selector).unbind(key, value); });
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
       }
-    },
-    toolbar: function () {
-      var html = [];
-      html.push("<div class='toolbar'>");
-      html.push("<img class='button bold'>");
-      html.push("<img class='button italic'>");
-      html.push("<img class='separator'>");
-      html.push("<img class='button link'>");
-      html.push("<img class='button quote'>");
-      html.push("<img class='separator'>");
-      html.push("<img class='button ordered'>");
-      html.push("<img class='button bullet'>");
-      html.push("<img class='button header'>");
-      html.push("<img class='button horizonal-rule'>");
-      html.push("<img class='button horizonal-rule'>");
-      html.push("</div>");
     },
     command: function (name) {
       var editable = $(this.selector)[0];
