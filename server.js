@@ -6,13 +6,15 @@ http.createServer(function (request, response) {
   } else {
     if (query.pathname == "/save") {
     } else if (/^\/(?:src|web)/.exec(query.pathname)) {
-      fs.readFile(query.pathname.substring(1), "utf8", function (error, data) {
+      fs.readFile(query.pathname.substring(1), function (error, data) {
         if (error) throw error;
 
         function mimeType () {
           switch (/\.([^.]+)$/.exec(query.pathname)[1]) {
           case "css":
             return "text/css";
+          case "png":
+            return "image/png";
           }
           return "text/html";
         }

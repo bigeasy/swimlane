@@ -4,6 +4,7 @@
 <title>Swimlane Demonstration</title>
 <style type="text/css">
   body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     background: #f0f0f0;
     text-align: center;
   }
@@ -12,10 +13,15 @@
     text-align: left;
     width: 400px;
   }
-  div[contentEditable="true"] {
+  #swimlane {
+    padding: 6px;
+  }
+  #swimlane[contentEditable="true"] {
+    padding: 5px;
     border: 1px solid red;
   }
 </style>
+<link href="toolbar.css" type="text/css" rel="stylesheet">
 <script src="jquery.js"></script>
 <script src="../src/swimlane.js"></script>
 <script type="text/javascript">
@@ -32,6 +38,7 @@
   }
   $(function () {
     var swimlane = new Swimlane({ selector: "#swimlane" });
+//    var toolbar = new Swimlane.Toolbar({ selector: "#toolbar" });
     $("#toggle").click(function () {
       swimlane.toggle();
       return false;
@@ -43,16 +50,40 @@
     $("#insert").click(function () {
       document.execCommand("insertParagraph", false, null);
     });
+    $("#swimlane").bind("mouseover", function (e) {
+      if (!swimlane.editing()) {
+        $("#edit").show();
+      }
+    });
+    $("#swimlane").mouseout(function (e) {
+      if (!swimlane.editing()) {
+        $("#edit").hide();
+      }
+    });
     $("#swimlane").keyup(function (e) {
       var editable = $("#swimlane");
       setTimeout(function () { path("tick") }, 1);
       $("#html").text($("#swimlane").html());  
+    });
+    $(".toolbar .button.bold").click(function () {
+      swimlane.command("bold");
+    });
+    $(".toolbar .button.italic").click(function () {
+      swimlane.command("italic");
     });
   });
 </script>
 </head>
 <body>
 <div id="content">
+<div id="edit">Edit</div>
+<div class="toolbar">
+  <a href="#" class="button bold"><span>Bold</span></a> 
+  <a href="#" class="button italic"><span>Italic</span></a> 
+  <div class="separator"></div>
+  <a href="#" class="button blockquote"><span>Italic</span></a> 
+  <div class="clear"></div>
+</div>
 Content immediately after.
   <a id="toggle" href="#">Toggle</a>.
   <a href="#" id="normalize">Normalize</a>.

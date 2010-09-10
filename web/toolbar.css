@@ -1,0 +1,47 @@
+.toolbar {
+    border: 1px dashed gray;
+    background: white;
+    padding: 4px 8px;
+}
+
+.toolbar .button {
+    height: 20px;
+    width: 20px;
+    margin: 0 2px;
+    display: block;
+    float: left;
+}
+
+.toolbar .button span {
+    display: none;
+}
+
+.toolbar .italic {
+    background: url("../src/wmd-buttons.png") -20px 0px;
+}
+.toolbar .italic:hover {
+    background: url("../src/wmd-buttons.png") -20px 20px;
+}
+.toolbar .bold {
+    background: url("../src/wmd-buttons.png") 0px 0px;
+}
+.toolbar .bold:hover {
+    background: url("../src/wmd-buttons.png") 0px 20px;
+}
+.toolbar .blockquote {
+    background: url("../src/wmd-buttons.png") 0px 0px;
+}
+.toolbar .bold:blockquote {
+    background: url("../src/wmd-buttons.png") 0px 20px;
+}
+.toolbar .separator {
+    display: block;
+    float: left;
+    border-left: 1px dashed gray;
+    margin: 0 9px;
+    height: 20px;
+}
+
+.clear {
+    clear: both;
+}

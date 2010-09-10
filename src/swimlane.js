@@ -11,17 +11,44 @@
   var disabledValue;
   Swimlane.prototype = {
     toggle: function () {
+      var swimlane = this;
+      function keyup (e) { swimlane.keyup(e); }
       var value = $(this.selector).attr("contentEditable");
       if (value == "false" || value == "inherit") {
+        $(this.selector).keyup(keyup);
         disabledValue = value;
         $(this.selector)[0].setAttribute("contentEditable", "true");
       } else {
+        $(this.selector).unbind("keyup", keyup);
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
       }
-      var swimlane = this;
-      $(this.selector).keyup(function (e) {
-        swimlane.keyup(e);
-      });
+    },
+    toolbar: function () {
+      var html = [];
+      html.push("<div class='toolbar'>");
+      html.push("<img class='button bold'>");
+      html.push("<img class='button italic'>");
+      html.push("<img class='separator'>");
+      html.push("<img class='button link'>");
+      html.push("<img class='button quote'>");
+      html.push("<img class='separator'>");
+      html.push("<img class='button ordered'>");
+      html.push("<img class='button bullet'>");
+      html.push("<img class='button header'>");
+      html.push("<img class='button horizonal-rule'>");
+      html.push("<img class='button horizonal-rule'>");
+      html.push("</div>");
+    },
+    command: function (name) {
+      var editable = $(this.selector)[0];
+      var anchorNode = window.getSelection().anchorNode;
+      while (anchorNode != null) {
+        if (anchorNode == editable) {
+          document.execCommand(name, false, null);
+          break;
+        }
+        anchorNode = anchorNode.parentNode;
+      }
     },
     editing: function () {
       return $(this.selector).attr("contentEditable") == "true";
