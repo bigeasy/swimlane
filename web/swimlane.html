@@ -26,6 +26,7 @@
 <script src="../src/swimlane.js"></script>
 <script type="text/javascript">
   function path (prefix) {
+    if (!$.browser.msie) {
       var path = [];
       var anchor =  window.getSelection().anchorNode.parentNode;
       var isSwimlane = $("#swimlane")[0] == anchor;
@@ -35,6 +36,7 @@
       }
       path.reverse();
       $("<div>" + prefix + " : " + isSwimlane + " : " + path.join(" &raquo; ") + "</div>").appendTo("#path");
+    }
   }
   $(function () {
     var swimlane = new Swimlane({ selector: "#swimlane" });
@@ -50,6 +52,7 @@
     $("#insert").click(function () {
       document.execCommand("insertParagraph", false, null);
     });
+    /*
     $("#swimlane").bind("mouseover", function (e) {
       if (!swimlane.editing()) {
         $("#edit").show();
@@ -60,6 +63,7 @@
         $("#edit").hide();
       }
     });
+    */
     $("#swimlane").keyup(function (e) {
       var editable = $("#swimlane");
       setTimeout(function () { path("tick") }, 1);

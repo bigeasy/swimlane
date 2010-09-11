@@ -3,11 +3,11 @@
 // Management and cross-browserization of HTML5 content editable controls.
 //
 (function () {
-  window.Swimlane = function Swimlane (options) {
-    return $.extend(this, options);
+  var Swimlane = window.Swimlane = function (options) {
+    $.extend(this, options);
   }
   var disabledValue;
-  Swimlane.prototype = {
+  $.extend(Swimlane.prototype, {
     toggle: function () {
       var swimlane = this;
       var rebind = {};
@@ -42,7 +42,7 @@
       var n = new Swimlane.Normalizer(document, $(this.selector)[0]);
       n.normalize({ start: null, stop: null });
     }
-  };
+  });
 
   if ($.browser.webkit) {
     $.extend(Swimlane.prototype, {
