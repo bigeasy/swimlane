@@ -11,16 +11,16 @@
     toggle: function () {
       var swimlane = this;
       var rebind = {};
-      $.each("keyup".split(/\s+/), function (index, value) {
-        rebind[value] = function (e) { alert("gerg"); return swimlane[value](e); };
+      $.each("keyup keydown keypress".split(/\s+/), function (index, value) {
+        rebind[value] = function (e) { return swimlane[value](e); };
       });
       var value = $(this.selector).attr("contentEditable");
       if (value == "false" || value == "inherit") {
-        $.each(rebind, function (key, value) { $(this.selector).bind(key, value); });
+        $.each(rebind, function (key, value) { $(swimlane.selector).bind(key, value); });
         disabledValue = value;
         $(this.selector)[0].setAttribute("contentEditable", "true");
       } else {
-        $.each(rebind, function (key, value) { $(this.selector).unbind(key, value); });
+        $.each(rebind, function (key, value) { $(swimlane.selector).unbind(key, value); });
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
       }
     },
@@ -39,38 +39,75 @@
       return $(this.selector).attr("contentEditable") == "true";
     },
     normalize: function() {
-      var editable = $(this.selector); 
-      editable = editable[0];
       normalize(document, $(this.selector)[0]);
+    },
+    keydown: function (e) {
+//      console.warn("DOWN: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+      if (e.keyCode == 90 && e.metaKey) {
+        e.preventDefault();
+      }
+    },
+    keypress: function (e) {
+    },
+    keyup: function (e) {
+      var editable = $(this.selector)[0];
+      try {
+        Swimlane.copacetic(editable);
+      } catch (_) {
+        Cursor.set(Swimlane.normalize(document, editable));
+      }
+      if (false && e.keyCode == 13) {
+        var anchorNode = window.getSelection().anchorNode;
+        if (anchorNode.tagName == "DIV") { //  && parentNode == editable) {
+          var p = $("<p><br></p>").insertAfter($(anchorNode))[0];
+          window.getSelection().selectAllChildren(editable);
+          window.getSelection().collapse(p, 0);
+          $(anchorNode).remove();
+        }
+      }
     }
   });
-
-  if ($.browser.webkit) {
-    $.extend(Swimlane.prototype, {
-      keyup: function (e) {
-        if (e.keyCode == 13) {
-          var editable = $(this.selector)[0];
-          var anchorNode = window.getSelection().anchorNode;
-          if (anchorNode.tagName == "DIV") { //  && parentNode == editable) {
-            var p = $("<p><br></p>").insertAfter($(anchorNode))[0];
-            window.getSelection().selectAllChildren(editable);
-            window.getSelection().collapse(p, 0);
-            $(anchorNode).remove();
-          }
-        }
+  
+  var Cursor = {};
+  if ($.browser.webkit || $.browser.mozilla) {
+    $.extend(Cursor, {
+      get: function () { 
+        var selection = window.getSelection();
+        return { node: selection.focusNode, offset: selection.focusOffset };
+      },
+      set: function (cursor) {
+        window.getSelection().collapse(cursor.node, cursor.offset);
       }
     });
-  } else if ($.browser.mozilla) {
-    $.extend(Swimlane.prototype, {
-      keyup: function (e) {
-        if (e.keyCode == 13) {
-          var parentNode = window.getSelection().anchorNode.parentNode;
-          if (parentNode == $(this.selector)[0].parentNode) {
-            document.execCommand("insertParagraph", false, null);
+  } else if ($.browser.msie) {
+    (function () {
+      var count = 0;
+      $.extend(Cursor, {
+        get: function () {
+          count++;
+          var range = document.selection.createRange();
+          var node = range.parentElement();
+          range.pasteHTML("<span id='__swimlane__" +  count + "'></span>");
+          var iterator = $("#__swimlane__" + count).get(0);
+          var offset = 0;
+          for (;;) {
+            var iterator = iterator.previousSibling;
+            if (!iterator || !(iterator.nodeType == 3 || iterator.nodeType == 4)) {
+              break;
+            }
+            offset += iterator.data.length;
           }
+          return { node: range.parentElement(), offset: offset }
+        },
+        set: function (cursor) {
+          var range = document.body.createTextRange();
+          range.moveToElementText(cursor.node);
+          range.collapse();
+          range.move("character", cursor.offset);
+          range.select();
         }
-      }
-    });
+      });
+    })();
   } 
 
   var inlines =  /sub|strong|em|br/i,
@@ -85,7 +122,7 @@
       } else if (iter.nodeType != 1) {
         throw "Only elements and text nodes allowed.";
       } else {
-        var tag = iter.localName.toLowerCase();
+        var tag = iter.tagName.toLowerCase();
         if (inlines.test(tag)) {
           throw "Inlines not allowed in body.";
         } else if (tag == 'br') {
@@ -117,27 +154,24 @@
   var validators = {
     p: function(para) {
       if (para.firstChild.nodeType == 3 && /^\s/.test(para.firstChild.data)) 
-        throw "Unnormalized whitespace.";
+        throw new Error("Unnormalized whitespace.");
       if (para.lastChild.nodeType == 3 && /\s$/.test(para.lastChild.data)) 
-        throw "Unnormalized whitespace.";
+        throw new Error("Unnormalized whitespace.");
       var iter = para.firstChild;
       while (iter != null) {
         if (iter.nodeType == 1)  {
-          var tag = iter.localName.toLowerCase();
-          if (self.inlines.test(tag)) {
-            (self.tests[tag] || self.tests['@'])(iter);
+          var tag = iter.tagName.toLowerCase();
+          if (inlines.test(tag)) {
+            (validators[tag] || validators['@'])(iter);
+          } else {
+            throw new Error("Invalid element <" + tag + "> in paragraph.");
           }
-          else if (self.blocks.test(tag)) {
-            throw "Block elements are forbidden in p.";
-          }
-        }
-        else if (iter.nodeType == 3) {
+        } else if (iter.nodeType == 3) {
           if (iter.previousSibling && iter.previousSibling.nodeType == 3)
             throw "Adjacent text nodes should be merged.";
           if (/\s\s/.test(iter.data))
             throw "Text should be normalized.";
-        }
-        else {
+        } else {
           throw "Only elements and text nodes allowed.";
         }
         iter = iter.nextSibling;
@@ -149,7 +183,7 @@
         if (prev.nodeType != 3)
           throw "There is always a text node before a br.";
         if (!/\n$/.test(prev.data))
-          throw "There is awlays a newline before a br.";
+          throw new Error("There is always a newline before a <br>.");
       }
       var next = e.nextSibling;
       if (next == null)
@@ -176,7 +210,7 @@
           iter = iter.nextSibling;
         }
         else if (iter.nodeType == 1) {
-          var tag = iter.localName.toLowerCase();
+          var tag = iter.tagName.toLowerCase();
           if (self.inlines.test(tag)) {
             iter = (self.normalizers[tag] || self.normalizers['@'])(iter);
           }
@@ -213,7 +247,7 @@
           }
         }
         else if (iter.nodeType == 1) {
-          if (iter.localName.toLowerCase() == 'li') {
+          if (iter.tagName.toLowerCase() == 'li') {
             iter = self.normalizers['li'](iter);
             if (iter != null && iter.parentNode != ul) next = iter;
           }
@@ -235,12 +269,12 @@
           iter = iter.nextSibling;
         }
         else if (iter.nodeType == 1) {
-          if (self.inlines.test(iter.localName)) {
-            var tag = iter.localName.toLowerCase();
+          if (self.inlines.test(iter.tagName)) {
+            var tag = iter.tagName.toLowerCase();
             (self.normalizers[tag] || self.normalizers['@'])(iter);
             iter = iter.nextSibling;
           }
-          else if (self.blocks.test(iter.localName)) {
+          else if (self.blocks.test(iter.tagName)) {
             var prev = iter.previousSibling;
             var parent = para.parentNode;
             var before = para.nextSibling;
@@ -282,8 +316,8 @@
           iter = iter.nextSibling;
         }
         else if (iter.nodeType == 1) {
-          var tag = iter.localName.toLowerCase();
-          if (self.inlines.test(iter.localName)) {
+          var tag = iter.tagName.toLowerCase();
+          if (self.inlines.test(iter.tagName)) {
             (self.normalizers[tag] || self.normalizers['@'])(iter);
           }
           else {
@@ -330,7 +364,7 @@
           node.insertBefore(text, first);
         }
         node.removeChild(first);
-      } else if (first.nodeType == 1 && /^br$/i.test(first.localName)) {
+      } else if (first.nodeType == 1 && /^br$/i.test(first.tagName)) {
         node.removeChild(first);
       } else {
         break;
@@ -345,7 +379,7 @@
           node.appendChild(text);
         }
         node.removeChild(last);
-      } else if (last.nodeType == 1 && /^br$/i.test(last.localName)) {
+      } else if (last.nodeType == 1 && /^br$/i.test(last.tagName)) {
         node.removeChild(last);
       } else {
         break;
@@ -370,6 +404,7 @@
   }
 
   function normalize (factory, body, start, stop) {
+    var cursor = Cursor.get();
     var iter = start ? start.nextSibling : body.firstChild;
     var append = null;
     if (!stop) stop = iter.nextSibling;
@@ -384,7 +419,7 @@
           iter = iter.nextSibling;
         }
       } else if (iter.nodeType == 1) {
-        var tag = iter.localName.toLowerCase();
+        var tag = iter.tagName.toLowerCase();
         if ((tag == 'br' || self.blocks.test(tag)) && append != null) {
             body.insertBefore(append, iter);
             self.normalizers['p'](append);
@@ -414,6 +449,8 @@
     if (append != null) {
         normalizers["p"](factory, append);
     }
+
+    return cursor;
   }
 
   // Called for each node, this method will normalize the node if it is a text
@@ -455,7 +492,7 @@
     // Break the text with new line if it is near a <br> so that HTML code is
     // nicely formatted.
     var prev = node.previousSibling;
-    if (prev != null && prev.nodeType == 1 && /^br$/i.test(prev.localName)) {
+    if (prev != null && prev.nodeType == 1 && /^br$/i.test(prev.tagName)) {
       if (node.nodeType != 3) {
         var text = factory.createTextNode("\n");
         parentNode.insertBefore(text, node);

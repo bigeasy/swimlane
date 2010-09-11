@@ -6,6 +6,7 @@
   <script type="text/javascript" src="jquery.js"></script>
   <script type="text/javascript" src="../vendor/qunit/qunit/qunit.js"></script>
   <script type="text/javascript" src="../src/swimlane.js"></script>
+  <script type="text/javascript" src="copacetic.js"></script>
   <script type="text/javascript" src="normalize.js"></script>
   <style>
     #abnormal, #normal {
@@ -22,9 +23,20 @@
     <div class="unwrapped">
       This text is unwrapped.
     </div>
+    <div class="strong">
+      This <strong>text</strong> is unwrapped.
+    </div>
+    <div class="br-no-newline"><p>This text has a<br>break.</p></div>
   </div>
   <div id="normal">
     <div class="unwrapped"><p>This text is unwrapped.</p></div>
+    <div class="strong"><p>This <strong>text</strong> is unwrapped.</p></div>
+    <div class="em"><p>This <em>text</em> is unwrapped.</p></div>
+    <div class="leading-white"><p> This text has leading whitespace.</p></div>
+    <div class="trailing-white"><p>This text has trailing whitespace. </p></div>
+    <div class="nested-block"><p>This text has an <div>invalid</div> tag whitespace.</p></div>
+    <div class="br"><p>This text has a
+<br>break.</p></div>
   </div>
   <div id="comparison">
     <pre id="actual"></pre>
