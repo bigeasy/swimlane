@@ -110,8 +110,8 @@
     })();
   } 
 
-  var inlines =  /sub|strong|em|br/i,
-      blocks = /ul|ol|p/i,
+  var inlines =  /^sub|strong|em|br$/i,
+      blocks = /^ul|ol|p$/i,
       content =  /\S|^\n$/;
   function copacetic (body) {
     var iter = body.firstChild;
@@ -267,14 +267,12 @@
       while (next == null && iter != null) {
         if ((iter = text(factory, iter)).nodeType == 3) {
           iter = iter.nextSibling;
-        }
-        else if (iter.nodeType == 1) {
-          if (self.inlines.test(iter.tagName)) {
+        } else if (iter.nodeType == 1) {
+          if (inlines.test(iter.tagName)) {
             var tag = iter.tagName.toLowerCase();
-            (self.normalizers[tag] || self.normalizers['@'])(iter);
+            (normalizers[tag] || normalizers['@'])(iter);
             iter = iter.nextSibling;
-          }
-          else if (self.blocks.test(iter.tagName)) {
+          } else if (blocks.test(iter.tagName)) {
             var prev = iter.previousSibling;
             var parent = para.parentNode;
             var before = para.nextSibling;
@@ -286,8 +284,7 @@
               parent.insertBefore(para.removeChild(after), before);
             } 
             next = block;
-          }
-          else {
+          } else {
             var after = iter.firstChild || iter.nextSibling;
             while (iter.firstChild != null) {
               var child = iter.removeChild(iter.firstChild);
@@ -296,9 +293,8 @@
             para.removeChild(iter);
             iter = after;
           }
-        }
-        else {
-            iter = self.remove(iter);
+        } else {
+            iter = remove(iter);
         }
       } 
       if (next == null) next = para.nextSibling;
@@ -407,7 +403,6 @@
     var cursor = Cursor.get();
     var iter = start ? start.nextSibling : body.firstChild;
     var append = null;
-    if (!stop) stop = iter.nextSibling;
     if (iter == stop) stop = stop.nextSibling;
     while (iter != stop) {
       if ((iter = text(factory, iter)).nodeType == 3) {
@@ -420,26 +415,26 @@
         }
       } else if (iter.nodeType == 1) {
         var tag = iter.tagName.toLowerCase();
-        if ((tag == 'br' || self.blocks.test(tag)) && append != null) {
+        if ((tag == 'br' || blocks.test(tag)) && append != null) {
             body.insertBefore(append, iter);
             self.normalizers['p'](append);
             append = null;
         }
         if (tag == 'br') {
             iter = self.remove(iter);
-        } else if (self.inlines.test(tag)) {
+        } else if (inlines.test(tag)) {
             (self.normalizers[tag] || self.normalizers['@'])(iter);
             if (append == null) append = self.paragraph(iter);
             else append.appendChild(body.removeChild(iter));
             iter = append.nextSibling;
-        } else if (self.blocks.test(tag)) {
+        } else if (blocks.test(tag)) {
             if (iter.previousSibling && iter.previousSibling.nodeType != 3) {
                 var newline = factory.createTextNode('\n');
                 body.insertBefore(newline, iter);
             }
-            iter = (self.normalizers[tag] || self.normalizers['!'])(iter);
+            iter = (normalizers[tag] || normalizers['!'])(factory, iter);
         } else {
-            iter = self.flatten(iter);
+            iter = flatten(iter);
         }
       } else {
           iter = self.remove(iter);
