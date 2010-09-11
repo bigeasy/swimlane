@@ -10,7 +10,7 @@ http.createServer(function (request, response) {
     if (/^\/?$/.exec(pathname)) {
     } else {
       if (pathname == "/save") {
-      } else if (/^\/(?:src|web)/.exec(pathname)) {
+      } else if (/^\/(?:src|web|vendor)/.exec(pathname)) {
         fs.readFile(pathname.substring(1), function (error, data) {
           if (error) throw error;
 

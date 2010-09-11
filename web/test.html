@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Swimlane Test Suite</title>
+  <link rel="stylesheet" href="../vendor/qunit/qunit/qunit.css" type="text/css" media="screen">
+  <script type="text/javascript" src="jquery.js"></script>
+  <script type="text/javascript" src="../vendor/qunit/qunit/qunit.js"></script>
+  <script type="text/javascript" src="../src/swimlane.js"></script>
+  <script type="text/javascript" src="normalize.js"></script>
+  <style>
+    #abnormal, #normal {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="qunit-header">Swimlane Test Suite</h1>
+  <h2 id="qunit-banner"></h2>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="abnormal">
+    <div class="unwrapped">
+      This text is unwrapped.
+    </div>
+  </div>
+  <div id="normal">
+    <div class="unwrapped"><p>This text is unwrapped.</p></div>
+  </div>
+  <div id="comparison">
+    <pre id="actual"></pre>
+    <pre id="expected"></pre>
+  </div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->

@@ -29,10 +29,10 @@
     background: url("../src/wmd-buttons.png") 0px 20px;
 }
 .toolbar .blockquote {
-    background: url("../src/wmd-buttons.png") 0px 0px;
+    background: url("../src/wmd-buttons.png") -60px 0px;
 }
-.toolbar .bold:blockquote {
-    background: url("../src/wmd-buttons.png") 0px 20px;
+.toolbar .blockquote:hover {
+    background: url("../src/wmd-buttons.png") -60px 20px;
 }
 .toolbar .separator {
     display: block;
