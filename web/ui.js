@@ -70,5 +70,9 @@ $(function () {
   test("type many characters", function () {
     typeAndSee("many-characters", "abc");
   });
+
+  test("leave a space at the end", function () {
+    typeAndSee("space-at-end", "a ");
+  });
 });
 // vim: set ts=2 sw=2 nowrap:

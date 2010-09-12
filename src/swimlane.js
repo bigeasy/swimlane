@@ -188,11 +188,10 @@
     parent.removeChild(node);
     return previousSibling == null ? parent.firstChild : previousSibling.nextSibling;
   }
+
   var validators = {
     p: function(para) {
       if (para.firstChild.nodeType == 3 && /^\s/.test(para.firstChild.data)) 
-        throw new Error("Unnormalized whitespace.");
-      if (para.lastChild.nodeType == 3 && /\s$/.test(para.lastChild.data)) 
         throw new Error("Unnormalized whitespace.");
       var iter = para.firstChild;
       while (iter != null) {
