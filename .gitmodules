@@ -1,12 +1,3 @@
 [submodule "vendor/qunit"]
 	path = vendor/qunit
 	url = git://github.com/jquery/qunit.git
-[submodule "steal"]
-	path = vendor/steal
-	url = git://github.com/jupiterjs/steal.git
-[submodule "vendor/steal"]
-	path = vendor/steal
-	url = git://github.com/jupiterjs/steal.git
-[submodule "vendor/funcunit"]
-	path = vendor/funcunit
-	url = git://github.com/jupiterjs/funcunit.git
