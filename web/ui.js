@@ -64,14 +64,11 @@ $(function () {
   });
 
   test("type two characters", function () {
-    var swimlane = setup("two-characters");
-    try {
-      swimlane.toggle();
-      $(getFocusNode()).ascii("ab");
-      ok(compare($(swimlane.selector)[0],  $("#output .two-characters")[0], "two-characters"), "Not equal to expected value.");;
-    } finally {
-      teardown(swimlane);
-    }
+    typeAndSee("two-characters", "ab");
+  });
+
+  test("type many characters", function () {
+    typeAndSee("many-characters", "abc");
   });
 });
 // vim: set ts=2 sw=2 nowrap:
