@@ -18,6 +18,8 @@ http.createServer(function (request, response) {
             switch (/\.([^.]+)$/.exec(pathname)[1]) {
             case "css":
               return "text/css";
+            case "js":
+              return "text/javascript";
             case "png":
               return "image/png";
             }

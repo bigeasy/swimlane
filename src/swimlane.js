@@ -3,6 +3,7 @@
 // Management and cross-browserization of HTML5 content editable controls.
 //
 (function () {
+  var console = $.browser.mise ? { log: function () {} } : window.console;
   var Swimlane = window.Swimlane = function (options) {
     $.extend(this, options);
   }
@@ -42,28 +43,24 @@
       normalize(document, $(this.selector)[0]);
     },
     keydown: function (e) {
-//      console.warn("DOWN: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-      if (e.keyCode == 90 && e.metaKey) {
-        e.preventDefault();
-      }
+      console.log("DOWN: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+    //  e.preventDefault();
     },
     keypress: function (e) {
+      console.log("PRESS: " + e.keyCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+      if (e.keyCode != 37) {
+        e.preventDefault();
+        Cursor.insertText(String.fromCharCode(e.which));
+      }
     },
     keyup: function (e) {
+      console.log("UP: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+//      e.preventDefault();
       var editable = $(this.selector)[0];
       try {
         Swimlane.copacetic(editable);
       } catch (_) {
         Cursor.set(Swimlane.normalize(document, editable));
-      }
-      if (false && e.keyCode == 13) {
-        var anchorNode = window.getSelection().anchorNode;
-        if (anchorNode.tagName == "DIV") { //  && parentNode == editable) {
-          var p = $("<p><br></p>").insertAfter($(anchorNode))[0];
-          window.getSelection().selectAllChildren(editable);
-          window.getSelection().collapse(p, 0);
-          $(anchorNode).remove();
-        }
       }
     }
   });
@@ -73,10 +70,24 @@
     $.extend(Cursor, {
       get: function () { 
         var selection = window.getSelection();
-        return { node: selection.focusNode, offset: selection.focusOffset };
+        return { node: selection.focusNode, offset: selection.focusOffset, selection: selection };
       },
       set: function (cursor) {
         window.getSelection().collapse(cursor.node, cursor.offset);
+      },
+      insertText: function (text) {
+        var cursor = Cursor.get();
+        if (cursor.selection.isCollapsed) {
+          if (cursor.node.nodeType == 1) {
+            cursor.node = cursor.node.appendChild(document.createTextNode(""));
+            cursor.offset = 0;
+          }
+          if (cursor.node.data.length == cursor.offset) {
+            cursor.node.data += text;
+            cursor.offset++;
+            Cursor.set(cursor);
+          }
+        }
       }
     });
   } else if ($.browser.msie) {
@@ -85,7 +96,8 @@
       $.extend(Cursor, {
         get: function () {
           count++;
-          var range = document.selection.createRange();
+          var selection = document.selection;
+          var range = selection.createRange();
           var node = range.parentElement();
           range.pasteHTML("<span id='__swimlane__" +  count + "'></span>");
           var iterator = $("#__swimlane__" + count).get(0);
@@ -97,7 +109,19 @@
             }
             offset += iterator.data.length;
           }
-          return { node: range.parentElement(), offset: offset }
+          return {
+            node: range.parentElement(),
+            offset: offset,
+            internal: { 
+              selection: selection,
+              range: range
+            }
+          }
+        },
+        insertText: function (text) {
+          var range = document.selection.createRange();
+          var rect  = range.getBoundingClientRect();
+          range.pasteHTML(text);
         },
         set: function (cursor) {
           var range = document.body.createTextRange();

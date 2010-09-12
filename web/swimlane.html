@@ -40,30 +40,14 @@
   }
   $(function () {
     var swimlane = new Swimlane({ selector: "#swimlane" });
-//    var toolbar = new Swimlane.Toolbar({ selector: "#toolbar" });
     $("#toggle").click(function () {
       swimlane.toggle();
+      $("#swimlane").focus();
       return false;
-    });
-    $("#normalize").click(function () {
-      swimlane.normalize();
-      $("#html").text($("#swimlane").html());  
     });
     $("#insert").click(function () {
       document.execCommand("insertParagraph", false, null);
     });
-    /*
-    $("#swimlane").bind("mouseover", function (e) {
-      if (!swimlane.editing()) {
-        $("#edit").show();
-      }
-    });
-    $("#swimlane").mouseout(function (e) {
-      if (!swimlane.editing()) {
-        $("#edit").hide();
-      }
-    });
-    */
     $("#swimlane").keyup(function (e) {
       var editable = $("#swimlane");
       setTimeout(function () { path("tick") }, 1);
@@ -87,11 +71,8 @@
   <a href="#" class="button blockquote"><span>Blockquote</span></a> 
   <div class="clear"></div>
 </div>
-Content immediately after.
-  <a id="toggle" href="#">Toggle</a>.
-  <a href="#" id="normalize">Normalize</a>.
-<div id="swimlane">
-</div>
+Content immediately after.  <a id="toggle" href="#">Toggle</a>.
+<div id="swimlane"></div>
 Content immediately after.
 <pre id="html">
 </pre>
