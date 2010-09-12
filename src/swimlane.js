@@ -19,11 +19,24 @@
       if (value == "false" || value == "inherit") {
         $.each(rebind, function (key, value) { $(swimlane.selector).bind(key, value); });
         disabledValue = value;
+        var editable = $(this.selector)[0];
         $(this.selector)[0].setAttribute("contentEditable", "true");
+        $(this.selector)[0].focus();
+ //       var editable = $(this.selector)[0];
+//        editable.setAttribute("contentEditable", "true");
+//        $(editable).focus();
+        if (editable.firstChild && editable.firstChild.nodeType == 1) {
+          Cursor.set({ node: editable.firstChild, offset: 0 });
+        } else {
+          Cursor.set({ node: editable, offset: 0 });
+        }
       } else {
         $.each(rebind, function (key, value) { $(swimlane.selector).unbind(key, value); });
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
       }
+    },
+    unbind: function () {
+      if (this.editing()) this.toggle();
     },
     command: function (name) {
       var editable = $(this.selector)[0];
@@ -43,14 +56,14 @@
       normalize(document, $(this.selector)[0]);
     },
     keydown: function (e) {
-      console.log("DOWN: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-    //  e.preventDefault();
+      console.log("DOWN: " + e.keyCode + ", " + e.charCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+//      e.preventDefault();
     },
     keypress: function (e) {
-      console.log("PRESS: " + e.keyCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
+      console.log("PRESS: " + e.keyCode + ", " + e.charCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
       if (e.keyCode != 37) {
         e.preventDefault();
-        Cursor.insertText(String.fromCharCode(e.which));
+        Cursor.insertText(String.fromCharCode(e.charCode || e.keyCode));
       }
     },
     keyup: function (e) {

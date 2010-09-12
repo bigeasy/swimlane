@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Swimlane UI Test Suite</title>
+  <link rel="stylesheet" href="../vendor/qunit/qunit/qunit.css" type="text/css" media="screen">
+  <script type="text/javascript" src="jquery.js"></script>
+  <script type="text/javascript" src="compare.js"></script>
+  <script type="text/javascript" src="jquery.simulate.js"></script>
+  <script type="text/javascript" src="../vendor/qunit/qunit/qunit.js"></script>
+  <script type="text/javascript" src="../src/swimlane.js"></script>
+  <script type="text/javascript" src="ui.js"></script>
+  <style>
+    #input > div, #output {
+      display: none;
+    }
+    #comparisons {
+      border: 3px solid #ccc;
+      margin: 30px;
+      padding: 5px 30px;
+      display: none;
+    }
+    #comparisons pre {
+      border: 1px dashed black;
+    }
+    #input > div.visible-editor {
+      position: absolute;
+      top: 60px;
+      right: 30px;
+      background: white;
+      border: 5px solid #ccc;
+      width: 300px;
+      padding: 6px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="qunit-header">Swimlane UI Test Suite</h1>
+  <h2 id="qunit-banner"></h2>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="input">
+    <div class="single-character"></div>
+    <div class="create-swimlane"><p></p></div>
+  </div>
+  <div id="output">
+    <div class="single-character"><p>a</p></div>
+  </div>
+  <div id="comparisons">
+  </div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->
