@@ -8,6 +8,20 @@ $(function () {
         $(this).simulate("keypress", options || {});
         $(this).simulate("keyup", options || {});
       });
+    },
+    ascii: function(characters) {
+      return this.each(function() {
+        for (var i = 0; i < characters.length; i++) {
+          var ch = characters.substring(i, i + 1);
+          if ($.browser.msie) {
+            $(this).type({ keyCode: ch.charCodeAt(0) });
+          } else if (ch.toLowerCase() != ch) {
+            $(this).type({ keyCode: ch.charCodeAt(0) - 32, charCode: ch.charCodeAt(0) });
+          } else {
+            $(this).type({ keyCode: ch.charCodeAt(0), charCode: ch.charCodeAt(0) });
+          }
+        }
+      });
     }
   });
 
@@ -34,12 +48,27 @@ $(function () {
     equals(0, $("#input .create-swimlane").size(), "Swimlane not removed.");
   });
 
-  test("type single character", function () {
-    var swimlane = setup("single-character");
+  function  typeAndSee(name, chars) {
+    var swimlane = setup(name);
     try {
       swimlane.toggle();
-      $(getFocusNode()).type({ keyCode: 65, charCode: 97 });
-      ok(compare($(swimlane.selector)[0],  $("#output .single-character")[0], "single-character"), "Not equal to expected value.");;
+      $(getFocusNode()).ascii(chars);
+      ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
+    } finally {
+      teardown(swimlane);
+    }
+  }
+
+  test("type single character", function () {
+    typeAndSee("single-character", "a");
+  });
+
+  test("type two characters", function () {
+    var swimlane = setup("two-characters");
+    try {
+      swimlane.toggle();
+      $(getFocusNode()).ascii("ab");
+      ok(compare($(swimlane.selector)[0],  $("#output .two-characters")[0], "two-characters"), "Not equal to expected value.");;
     } finally {
       teardown(swimlane);
     }
