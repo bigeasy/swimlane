@@ -134,7 +134,7 @@
         insertText: function (text) {
           var range = document.selection.createRange();
           var rect  = range.getBoundingClientRect();
-          range.pasteHTML(text);
+          range.text = text;
         },
         set: function (cursor) {
           var range = document.body.createTextRange();
