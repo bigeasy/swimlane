@@ -34,5 +34,19 @@ $(function () {
   test("accepts placeholder br", function () {
     Swimlane.copacetic($("#normal .placeholder-br")[0]);
   });
+  test("rejects br at start", function () {
+    var div = $("#abnormal .br-at-start")[0];
+    fail(div, "A block cannot begin with a <br> unless it is a placeholder.");
+  });
+  test("rejects br placeholder at end", function () {
+    var div = $("#abnormal .br-at-end")[0];
+    fail(div, "A block cannot end with a placehodler <br>.");
+  });
+  test("rejects span placeholder with text", function () {
+    fail($("#abnormal .placeholder-span-with-text")[0], "Invalid element <span> in paragraph.");
+  });
+  test("accepts span placeholder without text", function () {
+    Swimlane.copacetic($("#normal .placeholder-span-without-text")[0]);
+  });
 });
 // vim: set ts=2 sw=2 nowrap:

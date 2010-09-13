@@ -25,6 +25,9 @@
 <script src="jquery.js"></script>
 <script type="text/javascript">
   $(function () {
+    $("#editable").keyup(function (e) {
+      $("#html").text($("#editable").html());  
+    });
   });
 </script>
 </head>

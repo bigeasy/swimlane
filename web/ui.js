@@ -48,7 +48,7 @@ $(function () {
     equals(0, $("#input .create-swimlane").size(), "Swimlane not removed.");
   });
 
-  function  typeAndSee(name, chars) {
+  function  typeAndSee(name, chars, leave) {
     var swimlane = setup(name);
     try {
       swimlane.toggle();
@@ -59,6 +59,10 @@ $(function () {
     }
   }
 
+
+  test("two paragraphs", function () {
+    typeAndSee("two-paragraphs", "a\u000db", true);
+  });
   test("type single character", function () {
     typeAndSee("single-character", "a");
   });

@@ -54,10 +54,9 @@
     },
     keydown: function (e) {
       console.log("DOWN: " + e.keyCode + ", " + e.charCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-//      e.preventDefault();
       if (e.keyCode == 13) {
         e.preventDefault();
-        if ($.browser.webkit) this.keypress(e);
+        if (!$.browser.mozilla) this.keypress(e);
       }
     },
     keypress: function (e) {
@@ -69,13 +68,19 @@
         e.preventDefault();
         Cursor.insertText(String.fromCharCode(e.charCode || e.keyCode));
       } else if (charCode == 13) {
+      // Enter.
         e.preventDefault();
         var cursor = Cursor.get(); 
         var node = document.createElement(cursor.block.tagName);
-        node.appendChild(document.createTextNode(""));
-        node.appendChild(document.createElement("br"));
-        $(node).insertAfter(cursor.block);
-        Cursor.set({ node: node, offset: 0 });
+        if ($.browser.msie) {
+          var selected = $("<span class='__swimlane__placeholder'></span>").appendTo(node);
+          $(node).insertAfter(cursor.block);
+          Cursor.set({ node: selected[0], offset: 0 });
+        } else {
+          var selected = $("<br class='__swimlane__placeholder'>").appendTo(node);
+          $(node).insertAfter(cursor.block);
+          Cursor.set({ node: node, offset: 0 });
+        }
       }
     },
     keyup: function (e) {
@@ -83,7 +88,7 @@
       if (e.keyCode == 13) {
         e.preventDefault();
       }
-      if (e.keyCode != 13) {
+      if ($.browser.msie || e.keyCode != 13) {
         var editable = $(this.selector)[0];
         try {
           Swimlane.copacetic(editable);
@@ -117,6 +122,9 @@
             cursor.node = cursor.node.appendChild(document.createTextNode(""));
             cursor.offset = 0;
           }
+          if (cursor.node.data.length == 0 && cursor.node.previousSibling && $(cursor.node.previousSibling).hasClass("__swimlane__placeholder")) {
+            $(cursor.node.previousSibling).remove();
+          }
           if (cursor.node.data.length == cursor.offset) {
             cursor.node.data += text;
             cursor.offset++;
@@ -147,10 +155,9 @@
           return {
             node: range.parentElement(),
             offset: offset,
-            internal: { 
-              selection: selection,
-              range: range
-            }
+            selection: selection,
+            range: range,
+            block: range.parentElement()
           }
         },
         insertText: function (text) {
@@ -160,16 +167,58 @@
         },
         set: function (cursor) {
           var range = document.body.createTextRange();
-          range.moveToElementText(cursor.node);
-          range.collapse();
-          range.move("character", cursor.offset);
+          if (cursor.offset == 0) {
+             var offset = $(cursor.node).offset();
+             range.moveToPoint(offset.left, offset.top);
+          } else {
+            range.moveToElementText(cursor.node);
+            range.collapse();
+            range.move("character", cursor.offset);
+          }
           range.select();
         }
       });
     })();
   } 
 
-  var inlines =  /^sub|strong|em|br$/i,
+  function isTextAbnormal(data) {
+    return /[ \n\r\t][ \r\n\t]+/.test(data) || /^[ \n\r\t]/.test(data);
+  }
+
+  function normalizeText(data, trailing) {
+    var data =  data.replace(/[ \n\r\t][ \r\n\t]+/g, " ").replace(/^[ \n\r\t]+/, "")
+    return trailing ? data.replace(/[ \n\r\t]+$/, "") : data;
+  }
+
+  function characterCount(node) {
+    var stack = [ node ], iterator = node.firstChild;
+    var count = 0;
+    if (iterator) {
+      for (;;) {
+        if (iterator.nodeType == 3) {
+          count += normalizeText(iterator.data, true).length;
+        }
+        if (iterator.firstChild) {
+          stack.push(iterator);
+          iterator = iterator.firstChild;
+        } else {
+          for (;;) {
+            if (node == iterator) {
+              return count;
+            }
+            if (iterator.nextSibling) {
+              iterator = iterator.nextSibling;
+            } else {
+              iterator = stack.pop();
+            }
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  var inlines =  /^span|sub|strong|em|br$/i,
       blocks = /^ul|ol|p$/i,
       content =  /\S|^\n$/;
   function copacetic (body) {
@@ -188,8 +237,8 @@
           throw "Line breaks are not allowed in body.";
         } else if (blocks.test(tag)) {
           (validators[tag] || validators['!'])(iter);
-          if (iter.previousSibling && iter.previousSibling.nodeType != 3)
-            throw "New line separator missing.";
+//          if (iter.previousSibling && iter.previousSibling.nodeType != 3)
+ //           throw "New line separator missing.";
         } else {
           throw "Forbidden element " + tag;
         }
@@ -209,6 +258,28 @@
     }
     parent.removeChild(node);
     return previousSibling == null ? parent.firstChild : previousSibling.nextSibling;
+  }
+
+  function hasTextAfter(node) {
+    var next = node.nextSibling;
+    while (next && next.nodeType == 3) {
+      if (next.data.length != 0) {
+        return true;
+      }
+      next = next.nextSibling;
+    }
+    return false;
+  }
+
+  function hasTextBefore(node) {
+    var prev = node.previousSibling;
+    while (prev && prev.nodeType == 3) {
+      if (prev.data.length != 0) {
+        return true;
+      }
+      prev = prev.previousSibling;
+    }
+    return false;
   }
 
   var validators = {
@@ -237,9 +308,15 @@
     },
     br: function(e) {
       var prev = e.previousSibling;
-      if (prev != null) {
-        if (prev.nodeType != 3)
-          throw new Erorr("There is always a text node before a br.");
+      var placeholder = $(e).hasClass("__swimlane__placeholder");
+      if (placeholder) {
+        if (hasTextBefore(e) || hasTextAfter(e)) {
+          throw new Error("A block cannot end with a placehodler <br>.");
+        }
+      } else {
+        if ((prev == null || !hasTextBefore(e)) && hasTextAfter(e)) {
+          throw new Error("A block cannot begin with a <br> unless it is a placeholder.");
+        }
       }
       var next = e.nextSibling;
       if (next != null) {
@@ -248,6 +325,12 @@
         if (/^\s/.test(next.data))
           throw "There is never whitespace after a br.";
       }
+    },
+    span: function (node) {
+      if (!($(node).hasClass("__swimlane__placeholder") && characterCount(node) == 0)) {
+        throw Error("Invalid element <span> in paragraph.");
+      }
+      return node.nextSibling;
     },
     '!': function(e) {
     },
@@ -317,7 +400,10 @@
       if (next == null) next = ul.nextSibling;
       return next;
     },
-    p: function(factory, para, s) {
+    p: function(factory, para, cursor) {
+      function advance(iter, next) {
+        return next === iter ? next.nextSibling : next;
+      }
       var iter = para.firstChild;
       var next = null;
       while (next == null && iter != null) {
@@ -326,8 +412,7 @@
         } else if (iter.nodeType == 1) {
           if (inlines.test(iter.tagName)) {
             var tag = iter.tagName.toLowerCase();
-            (normalizers[tag] || normalizers['@'])(iter);
-            iter = iter.nextSibling;
+            var iter = advance(iter, (normalizers[tag] || normalizers["@"])(factory, iter, cursor));
           } else if (blocks.test(iter.tagName)) {
             var prev = iter.previousSibling;
             var parent = para.parentNode;
@@ -357,7 +442,22 @@
       trim(factory, para);
       return next;
     },
-    '@': function(node, s) {
+    span: function (factory, node, cursor) {
+      if (!($(node).hasClass("__swimlane__placeholder") && characterCount(node) == 0)) {
+        return normalizers["@"](factory, node, cursor);
+      }
+      return node;
+    },
+    "@": function (factory, node, cursor) {
+      var next = node.firstChild || node.nextSibling;
+      if (cursor.node === node) 
+        cursor.node = next;
+      while (node.firstChild) 
+        $(node.firstChild).insertBefore(node);
+      $(node).remove();
+      return next;
+    },
+    '@!': function(node, s) {
       var attributes = node.attributes;
       while (attributes.length != 0) {
         node.removeChild(attributes.item(0));
@@ -385,16 +485,17 @@
       }
       return node.nextSibling;
     },
-    br: function(node) {
+    br: function(factory, node) {
+      var next = node.nextSibling;
       while (node.firstChild != null)
         node.removeChild(node.firstChild);
-      var prev = node.previousSibling;
-      if (prev != null && prev.nodeType == 3 && !/\n$/m.test(prev.data)) {
-        var text = document.createTextNode(prev.data.replace(/\s+$/, '') + '\n');
-        node.parentNode.insertBefore(text, node);
-        node.parentNode.removeChild(prev);
+      if ($(node).hasClass("__swimlane__placeholder")) {
+        if (hasTextBefore(node) || hasTextAfter(node)) 
+          $(node).remove();
+      } else if (!hasTextBefore(node)) {
+          $(node).remove();
       }
-      return node.nextSibling;
+      return next;
     },
     '!': function(node) {
       node.parentNode.removeChild(node);
@@ -417,7 +518,8 @@
         }
         node.removeChild(first);
       } else if (first.nodeType == 1 && /^br$/i.test(first.tagName)) {
-        node.removeChild(first);
+       // node.removeChild(first);
+        break;
       } else {
         break;
       }
@@ -432,7 +534,8 @@
         }
         node.removeChild(last);
       } else if (last.nodeType == 1 && /^br$/i.test(last.tagName)) {
-        node.removeChild(last);
+      //  node.removeChild(last);
+        break;
       } else {
         break;
       }
@@ -477,20 +580,20 @@
             append = null;
         }
         if (tag == 'br') {
-            iter = self.remove(iter);
+          iter = self.remove(iter);
         } else if (inlines.test(tag)) {
-            (self.normalizers[tag] || self.normalizers['@'])(iter);
-            if (append == null) append = self.paragraph(iter);
+          var next = (normalizers[tag] || normalizers["@"])(factory, iter, cursor);
+          if (next === iter) {
+            if (append == null) append = paragraph(iter);
             else append.appendChild(body.removeChild(iter));
             iter = append.nextSibling;
+          } else {
+            iter = next;
+          }
         } else if (blocks.test(tag)) {
-            if (iter.previousSibling && iter.previousSibling.nodeType != 3) {
-                var newline = factory.createTextNode('\n');
-                body.insertBefore(newline, iter);
-            }
-            iter = (normalizers[tag] || normalizers['!'])(factory, iter);
+          iter = (normalizers[tag] || normalizers['!'])(factory, iter, cursor);
         } else {
-            iter = flatten(iter);
+          iter = flatten(iter);
         }
       } else {
           iter = self.remove(iter);
@@ -501,6 +604,16 @@
         normalizers["p"](factory, append);
     }
 
+    if (cursor.node && $.browser.msie) {
+      while (cursor.node.nodeType == 3) {
+        var prev = cursor.node.previousSibling;
+        while (prev) {
+          cursor.offset += characterCount(prev);
+          prev = prev.previousSibling;
+        }
+        cursor.node = cursor.node.parentNode;
+      }
+    }
     return cursor;
   }
 
@@ -534,21 +647,6 @@
       // Remove duplicate whitespace.
       if (/\s\s/.test(node.data)) {
         var text = factory.createTextNode(node.data.replace(/\s\s+/g, " "));
-        parentNode.insertBefore(text, node);
-        parentNode.removeChild(node);
-        node = text;
-      }
-    }
-
-    // Break the text with new line if it is near a <br> so that HTML code is
-    // nicely formatted.
-    var prev = node.previousSibling;
-    if (prev != null && prev.nodeType == 1 && /^br$/i.test(prev.tagName)) {
-      if (node.nodeType != 3) {
-        var text = factory.createTextNode("\n");
-        parentNode.insertBefore(text, node);
-      } else if (node.nodeType == 3 && /^\s/m.test(node.data)) {
-        var text = factory.createTextNode(node.data.replace(/^\s+/m, ''));
         parentNode.insertBefore(text, node);
         parentNode.removeChild(node);
         node = text;
