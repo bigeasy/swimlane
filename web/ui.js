@@ -9,21 +9,21 @@ $(function () {
         $(this).simulate("keyup", options || {});
       });
     },
-    ascii: function(characters) {
-      return this.each(function() {
-        for (var i = 0; i < characters.length; i++) {
-          var ch = characters.substring(i, i + 1);
-          if ($.browser.msie) {
-            $(this).type({ keyCode: ch.charCodeAt(0) });
-          } else if (ch.toLowerCase() != ch) {
-            $(this).type({ keyCode: ch.charCodeAt(0) - 32, charCode: ch.charCodeAt(0) });
-          } else {
-            $(this).type({ keyCode: ch.charCodeAt(0), charCode: ch.charCodeAt(0) });
-          }
-        }
-      });
-    }
   });
+
+  function ascii (characters) {
+    for (var i = 0; i < characters.length; i++) {
+      var ch = characters.substring(i, i + 1);
+      var focus =  $(getFocusNode());
+      if ($.browser.msie) {
+        focus.type({ keyCode: ch.charCodeAt(0) });
+      } else if (ch.toLowerCase() != ch) {
+        focus.type({ keyCode: ch.charCodeAt(0) - 32, charCode: ch.charCodeAt(0) });
+      } else {
+        focus.type({ keyCode: ch.charCodeAt(0), charCode: ch.charCodeAt(0) });
+      }
+    }
+  }
 
   function getFocusNode() {
     if ($.browser.msie)
@@ -52,7 +52,7 @@ $(function () {
     var swimlane = setup(name);
     try {
       swimlane.toggle();
-      $(getFocusNode()).ascii(chars);
+      ascii(chars);
       ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
     } finally {
       teardown(swimlane);
@@ -70,9 +70,10 @@ $(function () {
     }
   }
 
-  test("two paragraphs", function () {
-    typeAndSee("two-paragraphs", "a\u000db", true);
+  test("start with para", function () {
+    typeAndSee("start-with-para", "a");
   });
+
   test("type single character", function () {
     typeAndSee("single-character", "a");
   });
@@ -89,14 +90,18 @@ $(function () {
     typeAndSee("space-at-end", "a ");
   });
 
+  test("two paragraphs", function () {
+    typeAndSee("two-paragraphs", "a\u000db", true);
+  });
+
   test("insert single character", function () {
     var name = "insert-single-character";
     var swimlane = setup(name);
     try {
       swimlane.toggle();
-      $(getFocusNode()).ascii("ab");
+      ascii("ab");
       backspace();
-      $(getFocusNode()).ascii("c");
+      ascii("c");
       ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
     } finally {
       teardown(swimlane);

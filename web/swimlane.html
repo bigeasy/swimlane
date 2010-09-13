@@ -48,6 +48,10 @@
     $("#insert").click(function () {
       document.execCommand("insertParagraph", false, null);
     });
+    $("#show").click(function (e) {
+      var editable = $("#swimlane");
+      $("#html").text($("#swimlane").html());  
+    });
     $("#swimlane").keyup(function (e) {
       var editable = $("#swimlane");
       setTimeout(function () { path("tick") }, 1);
@@ -71,8 +75,8 @@
   <a href="#" class="button blockquote"><span>Blockquote</span></a> 
   <div class="clear"></div>
 </div>
-Content immediately before.  <a id="toggle" href="#">Toggle</a>.
-<div id="swimlane"><p>a</p></div>
+Content immediately before.  <a id="toggle" href="#">Toggle</a>. <a href="#" id="show">Show</a>.
+<div id="swimlane"><p></p></div>
 Content immediately after.
 <pre id="html">
 </pre>

@@ -21,13 +21,29 @@
         $.each(rebind, function (key, value) { $(swimlane.selector).bind(key, value); });
         disabledValue = value;
         var editable = $(this.selector)[0];
+        Swimlane.normalize(document, editable);
         editable.setAttribute("contentEditable", "true");
-        editable.focus();
-        if (editable.firstChild && editable.firstChild.nodeType == 1) {
-          Cursor.set({ node: editable.firstChild, offset: 0 });
-        } else {
-          Cursor.set({ node: editable, offset: 0 });
+        if (!editable.firstChild || characterCount(editable.firstChild) == 0) {
+          if ($.browser.msie) {
+            $(editable).append("<p><span class='__swimlane__placeholder'></span></p>");
+          } else {
+            $(editable).append("<p><br class='__swimlane__placeholder'></p>");
+          }
         }
+        var node = editable;
+        while (node.firstChild && node.firstChild.nodeType != 3 && node.firstChild.tagName != "BR") {
+          node = node.firstChild; 
+        }
+        if (!node.firstChild || node.firstChild != 3) {
+          var text = node.insertBefore(document.createTextNode(""), node.firstChild);
+          if (!$.browser.msie) {
+            node = text;
+          }
+        }
+        if (!$.browser.msie && node.firstChild) {
+          node = node.firstChild;
+        }
+        Cursor.set({ node: node, offset: 0 });
       } else {
         $.each(rebind, function (key, value) { $(swimlane.selector).unbind(key, value); });
         $(this.selector)[0].setAttribute("contentEditable", disabledValue);
@@ -172,8 +188,14 @@
         set: function (cursor) {
           var range = document.body.createTextRange();
           if (cursor.offset == 0) {
-             var offset = $(cursor.node).offset();
-             range.moveToPoint(offset.left, offset.top);
+            document.body.focus();
+            var offset = $(cursor.node).offset();
+            //range.moveToPoint(offset.left, offset.top);
+            range.moveToElementText(cursor.node);
+            range.move("character", cursor.offset + 1);
+            range.move("character", cursor.offset - 1);
+            range.collapse();
+            //range.move("character", cursor.offset);
           } else {
             range.moveToElementText(cursor.node);
             range.collapse();
@@ -573,7 +595,7 @@
     var cursor = Cursor.get();
     var iter = start ? start.nextSibling : body.firstChild;
     var append = null;
-    if (iter == stop) stop = stop.nextSibling;
+    if (iter && iter == stop) stop = stop.nextSibling;
     while (iter != stop) {
       if ((iter = text(factory, iter, cursor)).nodeType == 3) {
         if (iter.data != "\n") {
@@ -648,10 +670,10 @@
       // might be reaching outside the range givne to us to normalize. That is
       // if fine. The boundary is guidance to save time, not a firewall.
       if (prev != null && prev.nodeType == 3) {
-        if (prev == cursor.node) {
-          cursor.node = prev;
-        }
         var text = factory.createTextNode(prev.data + node.data);
+        if (prev == cursor.node) {
+          cursor.node = text;
+        }
         parentNode.insertBefore(text, prev);
         parentNode.removeChild(prev);
         parentNode.removeChild(node);
