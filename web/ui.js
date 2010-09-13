@@ -59,6 +59,16 @@ $(function () {
     }
   }
 
+  function backspace () {
+    if ($.browser.msie) {
+      var range = document.selection.createRange();
+      range.move("character", -1);
+      range.select();
+    } else {
+      var selection = window.getSelection();
+      selection.collapse(selection.focusNode, selection.focusOffset - 1);
+    }
+  }
 
   test("two paragraphs", function () {
     typeAndSee("two-paragraphs", "a\u000db", true);
@@ -77,6 +87,20 @@ $(function () {
 
   test("leave a space at the end", function () {
     typeAndSee("space-at-end", "a ");
+  });
+
+  test("insert single character", function () {
+    var name = "insert-single-character";
+    var swimlane = setup(name);
+    try {
+      swimlane.toggle();
+      $(getFocusNode()).ascii("ab");
+      backspace();
+      $(getFocusNode()).ascii("c");
+      ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
+    } finally {
+      teardown(swimlane);
+    }
   });
 });
 // vim: set ts=2 sw=2 nowrap:

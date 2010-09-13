@@ -10,6 +10,7 @@ function compare(actual, expected, name) {
 }
 
 function deepCompare(actual, expected) {
+  actual.normalize();
   var left = actual.firstChild, right = expected.firstChild,
       lefts = [ actual ], rights = [ expected ];
   if (left == null || right == null) {

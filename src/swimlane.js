@@ -3,7 +3,7 @@
 // Management and cross-browserization of HTML5 content editable controls.
 //
 (function () {
-  var console = $.browser.mise ? { log: function () {} } : window.console;
+  var console = window.console || { log: function () {} };
   var Swimlane = window.Swimlane = function (options) {
     $.extend(this, options);
   }
@@ -13,7 +13,7 @@
     toggle: function () {
       var swimlane = this;
       var rebind = {};
-      $.each("keyup keydown keypress".split(/\s+/), function (index, value) {
+      $.each("keyup keydown keypress paste".split(/\s+/), function (index, value) {
         rebind[value] = function (e) { return swimlane[value](e); };
       });
       var value = $(this.selector).attr("contentEditable");
@@ -60,11 +60,13 @@
         if (!$.browser.mozilla) this.keypress(e);
       }
     },
+    paste: function (e) {
+    },
     keypress: function (e) {
       console.log("PRESS: " + e.keyCode + ", " + e.charCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
       var charCode = $.browser.msie ? e.keyCode : e.charCode;
 
-      if (charCode >= 0x20 && !(charCode >= 0x7f && charCode < 0xA0) && charCode != 0xAD) {
+      if (charCode >= 0x20 && !(charCode >= 0x7f && charCode < 0xA0) && charCode != 0xAD && !e.metaKey && !e.ctrlKey) {
       // Printable characters.
         e.preventDefault();
         Cursor.insertText(String.fromCharCode(e.charCode || e.keyCode));
@@ -126,11 +128,12 @@
           if (cursor.node.data.length == 0 && cursor.node.previousSibling && $(cursor.node.previousSibling).hasClass("__swimlane__placeholder")) {
             $(cursor.node.previousSibling).remove();
           }
-          if (cursor.node.data.length == cursor.offset) {
-            cursor.node.data += text;
-            cursor.offset++;
-            Cursor.set(cursor);
+          if (cursor.node.data.length != cursor.offset) {
+            cursor.node.splitText(cursor.offset);
           }
+          cursor.node.data += text;
+          cursor.offset++;
+          Cursor.set(cursor);
         }
       }
     });
@@ -288,8 +291,10 @@
       if (para.firstChild.nodeType == 3 && /^\s/.test(para.firstChild.data)) 
         throw new Error("Unnormalized whitespace.");
       var iter = para.firstChild;
+      var endsWithSpace = false;
       while (iter != null) {
         if (iter.nodeType == 1)  {
+          endsWithSpace = false;
           var tag = iter.tagName.toLowerCase();
           if (inlines.test(tag)) {
             (validators[tag] || validators['@'])(iter);
@@ -297,10 +302,15 @@
             throw new Error("Invalid element <" + tag + "> in paragraph.");
           }
         } else if (iter.nodeType == 3) {
-          if (iter.previousSibling && iter.previousSibling.nodeType == 3)
-            throw "Adjacent text nodes should be merged.";
-          if (/\s\s/.test(iter.data))
+          if (iter.previousSibling && iter.previousSibling.nodeType == 3 && endsWithSpace) {
+            if (/^[ \t\r\n]/.test(iter.data)) {
+              throw new Error("Text should be normalized.");
+            }
+          }
+          if (/[ \t\r\n][ \t\r\n]/.test(iter.data)) {
             throw "Text should be normalized.";
+          }
+          endsWithSpace = /[ \t\r\n]/.test(iter.data);
         } else {
           throw "Only elements and text nodes allowed.";
         }
@@ -408,7 +418,7 @@
       var iter = para.firstChild;
       var next = null;
       while (next == null && iter != null) {
-        if ((iter = text(factory, iter)).nodeType == 3) {
+        if ((iter = text(factory, iter, cursor)).nodeType == 3) {
           iter = iter.nextSibling;
         } else if (iter.nodeType == 1) {
           if (inlines.test(iter.tagName)) {
@@ -565,7 +575,7 @@
     var append = null;
     if (iter == stop) stop = stop.nextSibling;
     while (iter != stop) {
-      if ((iter = text(factory, iter)).nodeType == 3) {
+      if ((iter = text(factory, iter, cursor)).nodeType == 3) {
         if (iter.data != "\n") {
           if (append == null) append = wrap(factory, iter, "p");
           else append.appendChild(body.removeChild(iter));
@@ -602,7 +612,7 @@
     }
 
     if (append != null) {
-        normalizers["p"](factory, append);
+        normalizers["p"](factory, append, cursor);
     }
 
     if (cursor.node && $.browser.msie) {
@@ -620,7 +630,7 @@
 
   // Called for each node, this method will normalize the node if it is a text
   // element, but if it is not a text element nothing is done.
-  function text (factory, node) {
+  function text (factory, node, cursor) {
     // Process a text node. 
     var parentNode = node.parentNode;
 
@@ -638,6 +648,9 @@
       // might be reaching outside the range givne to us to normalize. That is
       // if fine. The boundary is guidance to save time, not a firewall.
       if (prev != null && prev.nodeType == 3) {
+        if (prev == cursor.node) {
+          cursor.node = prev;
+        }
         var text = factory.createTextNode(prev.data + node.data);
         parentNode.insertBefore(text, prev);
         parentNode.removeChild(prev);
