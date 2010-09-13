@@ -7,6 +7,7 @@
   var Swimlane = window.Swimlane = function (options) {
     $.extend(this, options);
   }
+
   var disabledValue;
   $.extend(Swimlane.prototype, {
     toggle: function () {
@@ -61,13 +62,13 @@
     },
     keypress: function (e) {
       console.log("PRESS: " + e.keyCode + ", " + e.charCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-      var charCode = e.charCode || e.keyCode;
+      var charCode = $.browser.msie ? e.keyCode : e.charCode;
 
       if (charCode >= 0x20 && !(charCode >= 0x7f && charCode < 0xA0) && charCode != 0xAD) {
       // Printable characters.
         e.preventDefault();
         Cursor.insertText(String.fromCharCode(e.charCode || e.keyCode));
-      } else if (charCode == 13) {
+      } else if (e.keyCode == 13) {
       // Enter.
         e.preventDefault();
         var cursor = Cursor.get(); 
