@@ -6,11 +6,21 @@
   <script type="text/javascript" src="jquery.js"></script>
   <script type="text/javascript" src="../vendor/qunit/qunit/qunit.js"></script>
   <script type="text/javascript" src="../src/swimlane.js"></script>
+  <script type="text/javascript" src="compare.js"></script>
   <script type="text/javascript" src="copacetic.js"></script>
   <script type="text/javascript" src="normalize.js"></script>
   <style>
     #abnormal, #normal {
       display: none;
+    }
+    #comparisons {
+      border: 3px solid #ccc;
+      margin: 30px;
+      padding: 5px 30px;
+      display: none;
+    }
+    #comparisons pre {
+      border: 1px dashed black;
     }
   </style>
 </head>
@@ -26,25 +36,22 @@
     <div class="strong">
       This <strong>text</strong> is unwrapped.
     </div>
-    <div class="br-no-newline"><p>This text has a<br>break.</p></div>
-    <div class="nested-block"><p>This text has an <div>invalid</div> tag whitespace.</p></div>
+    <div class="unknown-nested-tag"><p>This text has an <span>invalid</span> tag.</p></div>
     <div class="leading-white"><p> This text has leading whitespace.</p></div>
-    <div class="trailing-white"><p>This text has trailing whitespace. </p></div>
     <div class="empty-span"><p>This text has <span></span>an empty span.</p></div>
     <div class="top-empty-span">This text has <span></span>an empty span.</div>
   </div>
   <div id="normal">
+    <div class="trailing-white"><p>This text has trailing whitespace. </p></div>
     <div class="unwrapped"><p>This text is unwrapped.</p></div>
     <div class="strong"><p>This <strong>text</strong> is unwrapped.</p></div>
     <div class="em"><p>This <em>text</em> is unwrapped.</p></div>
-    <div class="br"><p>This text has a
-<br>break.</p></div>
+    <div class="br"><p>This text has a<br>break.</p></div>
     <div class="empty-span"><p>This text has an empty span.</p></div>
     <div class="top-empty-span"><p>This text has an empty span.</p></div>
+    <div class="placeholder-br"><p><br></p></div>
   </div>
-  <div id="comparison">
-    <pre id="actual"></pre>
-    <pre id="expected"></pre>
+  <div id="comparisons">
   </div>
 </body>
 </html>

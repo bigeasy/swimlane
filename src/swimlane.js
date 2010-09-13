@@ -20,11 +20,8 @@
         $.each(rebind, function (key, value) { $(swimlane.selector).bind(key, value); });
         disabledValue = value;
         var editable = $(this.selector)[0];
-        $(this.selector)[0].setAttribute("contentEditable", "true");
-        $(this.selector)[0].focus();
- //       var editable = $(this.selector)[0];
-//        editable.setAttribute("contentEditable", "true");
-//        $(editable).focus();
+        editable.setAttribute("contentEditable", "true");
+        editable.focus();
         if (editable.firstChild && editable.firstChild.nodeType == 1) {
           Cursor.set({ node: editable.firstChild, offset: 0 });
         } else {
@@ -58,22 +55,41 @@
     keydown: function (e) {
       console.log("DOWN: " + e.keyCode + ", " + e.charCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
 //      e.preventDefault();
+      if (e.keyCode == 13) {
+        e.preventDefault();
+        if ($.browser.webkit) this.keypress(e);
+      }
     },
     keypress: function (e) {
       console.log("PRESS: " + e.keyCode + ", " + e.charCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-      if (e.keyCode != 37) {
+      var charCode = e.charCode || e.keyCode;
+
+      if (charCode >= 0x20 && !(charCode >= 0x7f && charCode < 0xA0) && charCode != 0xAD) {
+      // Printable characters.
         e.preventDefault();
         Cursor.insertText(String.fromCharCode(e.charCode || e.keyCode));
+      } else if (charCode == 13) {
+        e.preventDefault();
+        var cursor = Cursor.get(); 
+        var node = document.createElement(cursor.block.tagName);
+        node.appendChild(document.createTextNode(""));
+        node.appendChild(document.createElement("br"));
+        $(node).insertAfter(cursor.block);
+        Cursor.set({ node: node, offset: 0 });
       }
     },
     keyup: function (e) {
       console.log("UP: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-//      e.preventDefault();
-      var editable = $(this.selector)[0];
-      try {
-        Swimlane.copacetic(editable);
-      } catch (_) {
-        Cursor.set(Swimlane.normalize(document, editable));
+      if (e.keyCode == 13) {
+        e.preventDefault();
+      }
+      if (e.keyCode != 13) {
+        var editable = $(this.selector)[0];
+        try {
+          Swimlane.copacetic(editable);
+        } catch (_) {
+          Cursor.set(Swimlane.normalize(document, editable));
+        }
       }
     }
   });
@@ -83,7 +99,13 @@
     $.extend(Cursor, {
       get: function () { 
         var selection = window.getSelection();
-        return { node: selection.focusNode, offset: selection.focusOffset, selection: selection };
+        var node = selection.focusNode;
+        return {
+          node: node,
+          offset: selection.focusOffset,
+          selection: selection,
+          block: node ? node.parentNode : null
+        };
       },
       set: function (cursor) {
         window.getSelection().collapse(cursor.node, cursor.offset);
@@ -217,17 +239,15 @@
       var prev = e.previousSibling;
       if (prev != null) {
         if (prev.nodeType != 3)
-          throw "There is always a text node before a br.";
-        if (!/\n$/.test(prev.data))
-          throw new Error("There is always a newline before a <br>.");
+          throw new Erorr("There is always a text node before a br.");
       }
       var next = e.nextSibling;
-      if (next == null)
-        throw "Pointless br.";
-      if (next.nodeType != 3)
-        throw "There is always a text node after a br.";
-      if (/^\s/.test(next.data))
-        throw "There is never whitespace after a br.";
+      if (next != null) {
+        if (next.nodeType != 3)
+          throw "There is always a text node after a br.";
+        if (/^\s/.test(next.data))
+          throw "There is never whitespace after a br.";
+      }
     },
     '!': function(e) {
     },

@@ -21,20 +21,18 @@ $(function () {
   test("accepts br", function () {
     Swimlane.copacetic($("#normal .br")[0]);
   });
-  test("rejects a br without a preceeding newline", function () {
-    fail($("#abnormal .br-no-newline")[0], "There is always a newline before a <br>.");
+  test("accepts trainling whitespace", function () {
+    Swimlane.copacetic($("#normal .trailing-white")[0]);
   });
   test("rejects leading whitespace", function () {
-    fail($("#abnormal .leading-white")[0], "Unnormalized whitespace.");
+    var div = $("#abnormal .leading-white")[0];
+    if ($.browser.msie) {
+      div.firstChild.firstChild.data = " " + div.firstChild.firstChild.data;
+    }
+    fail(div, "Unnormalized whitespace.");
   });
-  test("rejects trailing whitespace", function () {
-    fail($("#abnormal .trailing-white")[0], "Unnormalized whitespace.");
-  });
-  test("rejects nested blocks", function () {
-    fail($("#abnormal .nested-block")[0], "Unnormalized whitespace.");
-  });
-  test("rejects empty spans", function () {
-    fail($("#abnormal .empty-span")[0], "Invalid element <span> in paragraph.");
+  test("accepts placeholder br", function () {
+    Swimlane.copacetic($("#normal .placeholder-br")[0]);
   });
 });
 // vim: set ts=2 sw=2 nowrap:
