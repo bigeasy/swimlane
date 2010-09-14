@@ -53,6 +53,7 @@ function deepCompare(actual, expected) {
           }
           left = left.nextSibling;
           right = right.nextSibling;
+          break;
         } else {
           left = lefts.pop();
           right = rights.pop();

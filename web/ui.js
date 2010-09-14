@@ -5,7 +5,9 @@ $(function () {
     type: function(options) {
       return this.each(function() {
         $(this).simulate("keydown", options || {});
-        $(this).simulate("keypress", options || {});
+        if (options.keyCode != 13 || $.browser.mozilla) {
+          $(this).simulate("keypress", options || {});
+        }
         $(this).simulate("keyup", options || {});
       });
     },
@@ -42,12 +44,6 @@ $(function () {
     $(".visible-editor").remove();
   }
 
-  test("create swimlane", function () {
-    var swimlane = setup("create-swimlane");
-    teardown(swimlane);
-    equals(0, $("#input .create-swimlane").size(), "Swimlane not removed.");
-  });
-
   function  typeAndSee(name, chars, leave) {
     var swimlane = setup(name);
     try {
@@ -55,7 +51,7 @@ $(function () {
       ascii(chars);
       ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
     } finally {
-      teardown(swimlane);
+      if (!leave) teardown(swimlane);
     }
   }
 
@@ -69,6 +65,12 @@ $(function () {
       selection.collapse(selection.focusNode, selection.focusOffset - 1);
     }
   }
+
+  test("create swimlane", function () {
+    var swimlane = setup("create-swimlane");
+    teardown(swimlane);
+    equals(0, $("#input .create-swimlane").size(), "Swimlane not removed.");
+  });
 
   test("start with para", function () {
     typeAndSee("start-with-para", "a");
@@ -91,7 +93,7 @@ $(function () {
   });
 
   test("two paragraphs", function () {
-    typeAndSee("two-paragraphs", "a\u000db", true);
+    typeAndSee("two-paragraphs", "a\u000db");
   });
 
   test("insert single character", function () {
@@ -102,6 +104,20 @@ $(function () {
       ascii("ab");
       backspace();
       ascii("c");
+      ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
+    } finally {
+      teardown(swimlane);
+    }
+  });
+
+  test("break block", function () {
+    var name = "break-block";
+    var swimlane = setup(name);
+    try {
+      swimlane.toggle();
+      ascii("abc");
+      backspace();
+      ascii("\u000d");
       ok(compare($(swimlane.selector)[0],  $("#output ." + name)[0], name), "Not equal to expected value.");;
     } finally {
       teardown(swimlane);

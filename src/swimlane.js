@@ -91,14 +91,20 @@
         e.preventDefault();
         var cursor = Cursor.get(); 
         var node = document.createElement(cursor.block.tagName);
-        if ($.browser.msie) {
-          var selected = $("<span class='__swimlane__placeholder'></span>").appendTo(node);
-          $(node).insertAfter(cursor.block);
-          Cursor.set({ node: selected[0], offset: 0 });
-        } else {
-          var selected = $("<br class='__swimlane__placeholder'>").appendTo(node);
-          $(node).insertAfter(cursor.block);
-          Cursor.set({ node: node, offset: 0 });
+        if (cursor.offset == characterCount(cursor.node)) {
+          if ($.browser.msie) {
+            var selected = $("<span class='__swimlane__placeholder'></span>").appendTo(node);
+            $(node).insertAfter(cursor.block);
+            Cursor.set({ node: selected[0], offset: 0 });
+          } else {
+            node.appendChild(document.createTextNode(""));
+            var selected = $("<br class='__swimlane__placeholder'>").appendTo(node);
+            $(node).insertAfter(cursor.block);
+            Cursor.set({ node: node, offset: 0 });
+          }
+        } else if (containers[cursor.block.tagName]) {
+        // A not too difficult split of a top level block.
+          Cursor.enter(cursor);
         }
       }
     },
@@ -117,10 +123,17 @@
       }
     }
   });
-  
-  var Cursor = {};
-  if ($.browser.webkit || $.browser.mozilla) {
-    $.extend(Cursor, {
+
+  function w3cCursor(factory) {
+    function collapse() {
+    }
+    function textNodeZoom(cursor) {
+      if (cursor.node.nodeType == 1) {
+        cursor.node = cursor.node.insertBefore(document.createTextNode(""), cursor.node.firstChild);
+        cursor.offset = 0;
+      }
+    }
+    return {
       get: function () { 
         var selection = window.getSelection();
         var node = selection.focusNode;
@@ -134,25 +147,42 @@
       set: function (cursor) {
         window.getSelection().collapse(cursor.node, cursor.offset);
       },
+      enter: function (cursor) {
+        if (cursor.offset == characterCount(cursor.node)) {
+        } else if (containers[cursor.block.tagName]) {
+          var split = factory.createElement(cursor.block.tagName);
+          var next = cursor.node.splitText(cursor.offset);
+          cursor.node = next;
+          cursor.offset = 0;
+          do {
+            var insert = next;
+            next = next.nextSibling;
+            split.appendChild(insert);
+          } while (next);
+          $(split).insertAfter(cursor.block);
+        }
+        Cursor.set(cursor);
+      },
       insertText: function (text) {
         var cursor = Cursor.get();
-        if (cursor.selection.isCollapsed) {
-          if (cursor.node.nodeType == 1) {
-            cursor.node = cursor.node.appendChild(document.createTextNode(""));
-            cursor.offset = 0;
-          }
-          if (cursor.node.data.length == 0 && cursor.node.previousSibling && $(cursor.node.previousSibling).hasClass("__swimlane__placeholder")) {
-            $(cursor.node.previousSibling).remove();
-          }
-          if (cursor.node.data.length != cursor.offset) {
-            cursor.node.splitText(cursor.offset);
-          }
-          cursor.node.data += text;
-          cursor.offset++;
-          Cursor.set(cursor);
+        if (!cursor.selection.isCollapsed)  collapse();
+        textNodeZoom(cursor);
+        if (cursor.node.data.length == 0 && cursor.node.previousSibling && $(cursor.node.previousSibling).hasClass("__swimlane__placeholder")) {
+          $(cursor.node.previousSibling).remove();
         }
+        if (cursor.node.data.length != cursor.offset) {
+          cursor.node.splitText(cursor.offset);
+        }
+        cursor.node.data += text;
+        cursor.offset++;
+        Cursor.set(cursor);
       }
-    });
+    }
+  }
+  
+  var Cursor = {};
+  if ($.browser.webkit || $.browser.mozilla) {
+    $.extend(Cursor, w3cCursor(document));
   } else if ($.browser.msie) {
     (function () {
       var count = 0;
@@ -216,7 +246,9 @@
     return trailing ? data.replace(/[ \n\r\t]+$/, "") : data;
   }
 
+  // Becoming important to get this right. Probably worth unit testing.
   function characterCount(node) {
+    if (node.nodeType == 3) return node.data.length;
     var stack = [ node ], iterator = node.firstChild;
     var count = 0;
     if (iterator) {
@@ -244,6 +276,8 @@
     return count;
   }
 
+  var containers = {};
+  $.each("LI P".split(/\s+/), function () { containers[this] = true; });
   var inlines =  /^span|sub|strong|em|br$/i,
       blocks = /^ul|ol|p$/i,
       content =  /\S|^\n$/;
