@@ -36,7 +36,7 @@ $(function () {
   function setup(input) {
     var selector = "#input ." + input;
     $(selector).wrap("<div class='visible-editor'></div>");
-    return new Swimlane({ selector: selector });
+    return new Swimlane(selector);
   }
 
   function teardown (swimlane) {

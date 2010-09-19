@@ -23,7 +23,7 @@
 </style>
 <link href="toolbar.css" type="text/css" rel="stylesheet">
 <script src="jquery.js"></script>
-<script src="../src/swimlane.js"></script>
+<script src="../lib/swimlane.js"></script>
 <script type="text/javascript">
   function path (prefix) {
     if (!$.browser.msie) {
@@ -39,7 +39,7 @@
     }
   }
   $(function () {
-    var swimlane = new Swimlane({ selector: "#swimlane" });
+    var swimlane = new Swimlane("#swimlane");
     $("#toggle").click(function () {
       swimlane.toggle();
       $("#swimlane").focus();
