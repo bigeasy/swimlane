@@ -1,6 +1,7 @@
 fs              = require("fs")
 {exec, spawn}   = require("child_process")
 path            = require("path")
+idl             = require("idl")
 
 compile = (sources) ->
   coffee =          spawn "coffee", "-c -o lib".split(/\s/).concat(sources)
@@ -34,6 +35,8 @@ task "gitignore", "create a .gitignore for node-ec2 based on git branch", ->
     else if branch is "master"
       gitignore += '''
                    documentation
+                   index.html
+                   site
                    lib
                    '''
     fs.writeFile(".gitignore", gitignore)
@@ -48,6 +51,11 @@ task "compile", "compile the CoffeeScript into JavaScript", ->
     sources = fs.readdirSync("src")
     sources = "src/" + source for source in sources when source.match(/\.coffee$/)
     compile sources
+
+task "index", "rebuild the Node IDL landing page.", ->
+  package = JSON.parse fs.readFileSync "package.json", "utf8"
+  console.log(package)
+  idl.generate "#{package.name}.idl", "index.html"
 
 task "clean", "rebuild the CoffeeScript docco documentation.", ->
   currentBranch (branch) ->

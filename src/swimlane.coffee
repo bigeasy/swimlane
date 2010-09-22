@@ -87,28 +87,40 @@ class Swimlane
 
   paste: (event) ->
 
+##### event "keydown"
+# Key down disables the control keys implemented by Swimlane; **enter** and
+# **backspace**.
+
+  # Handles the key down event `e`. If the browser is not Firefox, then
+  # preventing default will also prevent `keypress` so we trigger our keypress
+  # event explicitly if we prevent default on a non-Firefox browser.
   keydown: (e) ->
     console.log "DOWN: #{e.keyCode}, #{e.charCode}, #{e.altKey}, #{e.metaKey}, #{e.ctrlKey}"
     if e.keyCode is 13
       e.preventDefault()
-      if !$.browser.mozilla
+      if not $.browser.mozilla
         @keypress(e)
+    true
 
-  # Key press intercepts, disables, and re-implements default editor behavior
-  # for printable characters, enter and delete.
+##### event "keypress"
+# Key press intercepts, disables, and re-implements default editor behavior
+# for printable characters, enter and delete.
+
+  # Handle the `keypress` event `e`.
   keypress: (e) ->
     console.log "PRESS: #{e.keyCode}, #{e.charCode}, #{e.which}, #{e.altKey}, #{e.metaKey}, #{e.ctrlKey}"
 
+    # Sort out the cross-broswer character code muddle.
     charCode  = if $.browser.msie then e.keyCode else e.charCode
 
-    # For printable characters, use the cursor to insert text..
+    # For printable characters, insert the text at the cursor.
     if       charCode >= 0x20                     and
         not (charCode >= 0x7f && charCode < 0xA0) and
              charCode != 0xAD                     and
         not  e.metaKey                            and
         not  e.ctrlKey
       e.preventDefault()
-      (new Cursor).update().insertText String.fromCharCode(charCode)
+      (new Cursor).update().append(String.fromCharCode(charCode)).select()
 
     # For enter, append a blank block or break the current block.
     else if e.keyCode is 13
@@ -132,7 +144,7 @@ class Swimlane
       else if (containers[cursor.block.tagName])
         cursor.enter()
 
-    !e.isDefaultPrevented()
+    true
 
   keyup: (e) ->
     console.log "UP: #{e.keyCode}, #{e.altKey}, #{e.metaKey}, #{e.ctrlKey}"
@@ -143,9 +155,10 @@ class Swimlane
       try
         Swimlane.copacetic(editable)
       catch _
+        console.log "Dirty."
         cursor = Swimlane.normalize(document, editable)
         cursor.select()
-    this
+    true
 
 normalizeText = (data, trailing) ->
   data =  data.replace(/[ \n\r\t][ \r\n\t]+/g, " ").replace(/^[ \n\r\t]+/, "")
@@ -219,7 +232,7 @@ if $.browser.msie
       @range = range
       @block = range.parentElement()
       this
-    insertText: (text) ->
+    append: (text) ->
       range = document.selection.createRange()
       rect  = range.getBoundingClientRect()
       range.text = text
@@ -288,7 +301,7 @@ else
         @select()
       this
 
-    insertText: (text) ->
+    append: (text) ->
       if (!@selection.isCollapsed)
         @collapse()
       @textNodeZoom(this)
@@ -300,11 +313,16 @@ else
         $(@node.previousSibling).remove()
 
       if (@node.data.length != @offset)
-        @node.splitText(@offset)
-      @node.data += text
-      @offset++
+        data    = @node.data
+        before  = data.substring(0, @offset)
+        after   = data.substring(@offset)
+        @node.data = "#{before}#{text}#{after}"
+      else
+        if not @node.nextSibling and text is " "
+          text = "\u00A0"
+        @node.data += text
 
-      @select()
+      @offset++
 
       this
 
@@ -368,24 +386,31 @@ hasTextBefore = (node) ->
 
 validators =
   p: (para) ->
-    if para.firstChild.nodeType == 3 && /^\s/.test(para.firstChild.data)
+    if para.firstChild.nodeType is 3 and /^\s/.test(para.firstChild.data)
       throw new Error("Unnormalized whitespace.")
     iter = para.firstChild
     endsWithSpace = false
     while iter != null
-      if iter.nodeType == 1
+      if iter.nodeType is 1
         endsWithSpace = false
         tag = iter.tagName.toLowerCase()
         if inlines.test(tag)
           (validators[tag] || validators['@'])(iter)
         else
           throw new Error("Invalid element <" + tag + "> in paragraph.")
-      else if iter.nodeType == 3
-        if iter.previousSibling && iter.previousSibling.nodeType == 3 && endsWithSpace
-          if /^[ \t\r\n]/.test(iter.data)
-            throw new Error("Text should be normalized.")
+      else if iter.nodeType is 3
+        if iter.previousSibling               and
+           iter.previousSibling.nodeType is 3 and
+           endsWithSpace                      and
+           /^[ \t\r\n]/.test(iter.data)
+              throw new Error("Text should be normalized.")
         if (/[ \t\r\n][ \t\r\n]/.test(iter.data))
           throw "Text should be normalized."
+
+        # Non-breaking space after non-whitespace and before anything.
+        if (/[^ \t\r\n\u00a0]\u00a0./.test(iter.data))
+          throw "Text should be normalized."
+
         endsWithSpace = /[ \t\r\n]/.test(iter.data)
       else
         throw new Error("Only elements and text nodes allowed.")
@@ -526,28 +551,35 @@ text = (factory, node, cursor) ->
     text = factory.createTextNode(node.data)
     parentNode.insertBefore(text, node)
     parentNode.removeChild(node)
+
+    if cursor.node == node
+      cursor.node = text
+
     node = text
 
-  prev = node.previousSibling
-  if node.nodeType == 3
+  if node.nodeType is 3
     # Combine adjacent text nodes. You'll notice that this means that we
     # might be reaching outside the range givne to us to normalize. That is
     # if fine. The boundary is guidance to save time, not a firewall.
-    if prev != null && prev.nodeType == 3
-      text = factory.createTextNode(prev.data + node.data)
-      if prev == cursor.node
-        cursor.node = text
-      parentNode.insertBefore(text, prev)
-      parentNode.removeChild(prev)
+    prev = node.previousSibling
+    if prev != null and prev.nodeType is 3
+
+      if node == cursor.node
+        cursor.node     = prev
+        cursor.offset  += prev.data.length
+
       parentNode.removeChild(node)
-      node = text
+
+      prev.data  += node.data
+      node        = prev
 
     # Remove duplicate whitespace.
-    if /\s\s/.test(node.data)
-      text = factory.createTextNode(node.data.replace(/\s\s+/g, " "))
-      parentNode.insertBefore(text, node)
-      parentNode.removeChild(node)
-      node = text
+    if /[^ \n][^ \n]/.test(node.data)
+      node.data = node.data.replace(/[ \n][ \n]+/g, " ")
+
+    # Convert non-breaking spaces between non-whitespace.
+    if /[^ \n]\u00a0./.test(node.data)
+      node.data = node.data.replace(/([^ \n])\u00a0(.)/g, "$1 $2")
 
   node
 

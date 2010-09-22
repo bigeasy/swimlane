@@ -123,5 +123,10 @@ $(function () {
       teardown(swimlane);
     }
   });
+
+  test("single space", function () {
+    typeAndSee("single-space", "a b");
+  });
+
 });
 // vim: set ts=2 sw=2 nowrap:
