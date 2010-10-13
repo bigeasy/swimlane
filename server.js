@@ -4,7 +4,7 @@ var mount = "/swimlane/alpha";
 
 http.createServer(function (request, response) {
   var query = url.parse(request.url); 
-  if (query.pathname.indexOf(mount) == 0) {
+  if (query.pathname.indexOf(mount) == 0 && query.pathname.indexOf("/favicon.ico") == -1) {
     var pathname = query.pathname.substring(mount.length);
     console.log(pathname);
     if (/^\/?$/.exec(pathname)) {
@@ -23,16 +23,19 @@ http.createServer(function (request, response) {
             case "png":
               return "image/png";
             }
-            return "text/html";
+            return "text/html; charset=utf8";
           }
 
-          response.writeHead(200, {"Content-Type": mimeType() });
+          response.writeHead(200, { "Content-Type": mimeType(), "Content-Length": data.length });
           response.end(data);
         });
       }
     }
+  } else {
+    response.writeHead(404);
+    response.end();
   }
-}).listen(8080);
+}).listen(8386);
 
-console.log("Server running at http://127.0.0.1:8080/");
+console.log("Server running at http://127.0.0.1:8386/");
 // vim: set ts=2 sw=2 nowrap:

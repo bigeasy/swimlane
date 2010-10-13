@@ -1,4 +1,4 @@
-$(function () {
+Verity(function () {
   module("copacetic()");
 
   function fail(div, message) {
