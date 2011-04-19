@@ -1,17 +1,15 @@
 var http = require("http"), url = require("url"), fs = require("fs");
 
-var mount = "/swimlane/alpha";
-
 http.createServer(function (request, response) {
   var query = url.parse(request.url); 
-  if (query.pathname.indexOf(mount) == 0 && query.pathname.indexOf("/favicon.ico") == -1) {
-    var pathname = query.pathname.substring(mount.length);
+  if (query.pathname.indexOf("/favicon.ico") == -1) {
+    var pathname = query.pathname
     console.log(pathname);
     if (/^\/?$/.exec(pathname)) {
     } else {
       if (pathname == "/save") {
       } else if (/^\/(?:lib|src|web|vendor)/.exec(pathname)) {
-        fs.readFile(pathname.substring(1), function (error, data) {
+        fs.readFile("/public" + pathname, function (error, data) {
           if (error) throw error;
 
           function mimeType () {
