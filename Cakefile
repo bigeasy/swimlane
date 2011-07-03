@@ -110,6 +110,7 @@ task "gitignore", "create a .gitignore for node-ec2 based on git branch", ->
   currentBranch (branch) ->
     gitignore = '''
                 .gitignore
+                .AppleDouble
                 lib-cov
                 .DS_Store
                 lib/*
