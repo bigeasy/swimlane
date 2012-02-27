@@ -7,3 +7,6 @@
 [submodule "vendor/jquery-simulate"]
 	path = vendor/jquery-simulate
 	url = https://github.com/eduardolundgren/jquery-simulate.git
+[submodule "vendor/twinkie"]
+	path = vendor/twinkie
+	url = git@github.com:bigeasy/twinkie.git

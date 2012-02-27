@@ -571,7 +571,7 @@
     return wrapper;
   };
   text = function(factory, node, cursor) {
-    var parentNode, prev, text;
+    var parentNode, prev;
     parentNode = node.parentNode;
     if (node.nodeType === 4) {
       text = factory.createTextNode(node.data);
@@ -668,5 +668,9 @@
     }
     return cursor;
   };
-  (_ref2 = window.Swimlane) != null ? _ref2 : window.Swimlane = Swimlane;
+    if ((_ref2 = window.Swimlane) != null) {
+    _ref2;
+  } else {
+    window.Swimlane = Swimlane;
+  };
 }).call(this);
