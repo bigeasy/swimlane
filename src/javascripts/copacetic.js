@@ -1,4 +1,4 @@
-Verity(function () {
+$(function () {
   module("copacetic()");
 
   function fail(div, message) {
@@ -12,18 +12,23 @@ Verity(function () {
     equals(failed, message, "Unexpected error.");
   }
 
-  test("accepts strong", function () {
-    Swimlane.copacetic($("#normal .strong")[0]);
-  });
-  test("accepts em", function () {
-    Swimlane.copacetic($("#normal .em")[0]);
-  });
-  test("accepts br", function () {
-    Swimlane.copacetic($("#normal .br")[0]);
-  });
-  test("accepts trainling whitespace", function () {
-    Swimlane.copacetic($("#normal .trailing-white")[0]);
-  });
+  function accepts(path, title) {
+    test(title, function () {
+      ok(Swimlane.copacetic($(path)[0]), title);
+    });
+  }
+
+  function rejects(path, exception, title) {
+    test(title, function () {
+      var div = $(path)[0];
+      fail(div, exception);
+    });
+  }
+
+  accepts("#normal .strong", "accepts strong");
+  accepts("#normal .em", "accepts em");
+  accepts("#normal .br", "accepts br");
+  accepts("#normal .trailing-white", "accepts trainling whitespace");
   test("rejects leading whitespace", function () {
     var div = $("#abnormal .leading-white")[0];
     if ($.browser.msie) {
@@ -31,22 +36,16 @@ Verity(function () {
     }
     fail(div, "Unnormalized whitespace.");
   });
-  test("accepts placeholder br", function () {
-    Swimlane.copacetic($("#normal .placeholder-br")[0]);
-  });
-  test("rejects br at start", function () {
-    var div = $("#abnormal .br-at-start")[0];
-    fail(div, "A block cannot begin with a <br> unless it is a placeholder.");
-  });
-  test("rejects br placeholder at end", function () {
-    var div = $("#abnormal .br-at-end")[0];
-    fail(div, "A block cannot end with a placehodler <br>.");
-  });
-  test("rejects span placeholder with text", function () {
-    fail($("#abnormal .placeholder-span-with-text")[0], "Invalid element <span> in paragraph.");
-  });
-  test("accepts span placeholder without text", function () {
-    Swimlane.copacetic($("#normal .placeholder-span-without-text")[0]);
-  });
+  accepts("#normal .placeholder-br", "accepts placeholder br");
+  rejects("#abnormal .br-at-start",
+          "A block cannot begin with a <br> unless it is a placeholder.",
+          "rejects br at start");
+  rejects("#abnormal .br-at-end",
+          "A block cannot end with a placehodler <br>.",
+          "rejects br placeholder at end");
+  rejects("#abnormal .placeholder-span-with-text",
+          "Invalid element <span> in paragraph.",
+          "rejects span placeholder with text");
+  accepts("#normal .placeholder-span-without-text", "accepts span placeholder without text");
 });
 // vim: set ts=2 sw=2 nowrap:

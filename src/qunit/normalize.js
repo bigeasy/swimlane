@@ -1,4 +1,4 @@
-Verity(function () {
+$(function () {
   module("normalize()");
 
   function normalized(test) {

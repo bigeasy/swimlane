@@ -1,24 +1,28 @@
 (function() {
-  var Cursor, Swimlane, advance, blocks, characterCount, console, containers, content, hasTextAfter, hasTextBefore, inlines, normalizeText, normalizers, tag, text, trim, validators, wrap, _i, _len, _ref, _ref2;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var Cursor, Swimlane, advance, blocks, characterCount, console, containers, content, hasTextAfter, hasTextBefore, inlines, normalizeText, normalizers, tag, text, trim, validators, wrap, _i, _len, _ref;
+
   console = window.console || {
     log: function() {
       return true;
     }
   };
+
   Swimlane = (function() {
+
     function Swimlane(selector) {
-      var event, _i, _len, _ref;
+      var event, _i, _len, _ref,
+        _this = this;
       this.selector = selector;
       this.rebind = {};
       _ref = "keyup keydown keypress paste".split(/\s/);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         event = _ref[_i];
-        this.rebind[event] = __bind(function(e) {
-          return this[event](e);
-        }, this);
+        this.rebind[event] = function(e) {
+          return _this[event](e);
+        };
       }
     }
+
     Swimlane.prototype.toggle = function() {
       var editor, event, handler, node, text, value, _ref, _ref2;
       editor = $(this.selector);
@@ -45,13 +49,9 @@
         }
         if (!node.firstChild || node.firstChild !== 3) {
           text = node.insertBefore(document.createTextNode(""), node.firstChild);
-          if (!$.browser.msie) {
-            node = text;
-          }
+          if (!$.browser.msie) node = text;
         }
-        if (!$.browser.msie && node.firstChild) {
-          node = node.firstChild;
-        }
+        if (!$.browser.msie && node.firstChild) node = node.firstChild;
         (new Cursor()).select(node, 0);
       } else {
         _ref2 = this.rebind;
@@ -63,26 +63,27 @@
       }
       return this;
     };
+
     Swimlane.prototype.unbind = function() {
-      if (this.editing()) {
-        this.toggle();
-      }
+      if (this.editing()) this.toggle();
       return this;
     };
+
     Swimlane.prototype.editing = function() {
       return $(this.selector).attr("contentEditable") === "true";
     };
+
     Swimlane.prototype.paste = function(event) {};
+
     Swimlane.prototype.keydown = function(e) {
       console.log("DOWN: " + e.keyCode + ", " + e.charCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
       if (e.keyCode === 13) {
         e.preventDefault();
-        if (!$.browser.mozilla) {
-          this.keypress(e);
-        }
+        if (!$.browser.mozilla) this.keypress(e);
       }
       return true;
     };
+
     Swimlane.prototype.keypress = function(e) {
       var charCode, cursor, node, selected;
       console.log("PRESS: " + e.keyCode + ", " + e.charCode + ", " + e.which + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
@@ -111,12 +112,11 @@
       }
       return true;
     };
+
     Swimlane.prototype.keyup = function(e) {
       var cursor, editable;
       console.log("UP: " + e.keyCode + ", " + e.altKey + ", " + e.metaKey + ", " + e.ctrlKey);
-      if (e.keyCode === 13) {
-        e.preventDefault();
-      }
+      if (e.keyCode === 13) e.preventDefault();
       if ($.browser.msie || e.keyCode !== 13) {
         editable = $(this.selector)[0];
         try {
@@ -129,8 +129,11 @@
       }
       return true;
     };
+
     return Swimlane;
+
   })();
+
   normalizeText = function(data, trailing) {
     data = data.replace(/[ \n\r\t][ \r\n\t]+/g, " ").replace(/^[ \n\r\t]+/, "");
     if (trailing) {
@@ -139,11 +142,10 @@
       return data;
     }
   };
+
   characterCount = function(node) {
     var count, iterator, stack;
-    if (node.nodeType === 3) {
-      return node.data.length;
-    }
+    if (node.nodeType === 3) return node.data.length;
     stack = [node];
     iterator = node.firstChild;
     count = 0;
@@ -157,9 +159,7 @@
           iterator = iterator.firstChild;
         } else {
           while (true) {
-            if (node === iterator) {
-              return count;
-            }
+            if (node === iterator) return count;
             if (iterator.nextSibling) {
               iterator = iterator.nextSibling;
             } else {
@@ -171,12 +171,15 @@
     }
     return count;
   };
+
   if ($.browser.msie) {
     Cursor = (function() {
+
       function Cursor() {
         this.count = 0;
         this.read();
       }
+
       Cursor.prototype.read = function() {
         var iterator, node, range, selection;
         this.count++;
@@ -200,6 +203,7 @@
         this.block = range.parentElement();
         return this;
       };
+
       Cursor.prototype.append = function(text) {
         var range, rect;
         range = document.selection.createRange();
@@ -207,14 +211,11 @@
         range.text = text;
         return this;
       };
+
       Cursor.prototype.select = function(node, offset) {
         var range;
-        if (node) {
-          this.node = node;
-        }
-        if (offset) {
-          this.offset = offset;
-        }
+        if (node) this.node = node;
+        if (offset) this.offset = offset;
         range = document.body.createTextRange();
         if (this.offset === 0) {
           document.body.focus();
@@ -231,11 +232,15 @@
         range.select();
         return this;
       };
+
       return Cursor;
+
     })();
   } else {
     Cursor = (function() {
+
       function Cursor() {}
+
       Cursor.prototype.update = function() {
         var node, selection;
         selection = window.getSelection();
@@ -246,6 +251,7 @@
         this.block = node ? node.parentNode : null;
         return this;
       };
+
       Cursor.prototype.select = function(node, offset) {
         var _ref;
         if ((node != null) && (offset != null)) {
@@ -254,6 +260,7 @@
         window.getSelection().collapse(this.node, this.offset);
         return this;
       };
+
       Cursor.prototype.enter = function() {
         var insert, next, split;
         if (this.offset === characterCount(this.node)) {} else if (containers[this.block.tagName]) {
@@ -265,20 +272,17 @@
             insert = next;
             next = next.nextSibling;
             split.appendChild(insert);
-            if (!next) {
-              break;
-            }
+            if (!next) break;
           }
           $(split).insertAfter(this.block);
           this.select();
         }
         return this;
       };
+
       Cursor.prototype.append = function(text) {
         var after, before, data;
-        if (!this.selection.isCollapsed) {
-          this.collapse();
-        }
+        if (!this.selection.isCollapsed) this.collapse();
         this.textNodeZoom(this);
         if (this.node.data.length === 0 && this.node.previousSibling && $(this.node.previousSibling).hasClass("__swimlane__placeholder")) {
           $(this.node.previousSibling).remove();
@@ -289,14 +293,13 @@
           after = data.substring(this.offset);
           this.node.data = "" + before + text + after;
         } else {
-          if (!this.node.nextSibling && text === " ") {
-            text = "\u00A0";
-          }
+          if (!this.node.nextSibling && text === " ") text = "\u00A0";
           this.node.data += text;
         }
         this.offset++;
         return this;
       };
+
       Cursor.prototype.textNodeZoom = function(cursor) {
         var text;
         if (this.node.nodeType === 1) {
@@ -306,18 +309,26 @@
         }
         return this;
       };
+
       return Cursor;
+
     })();
   }
+
   containers = {};
+
   inlines = /^span|sub|strong|em|br$/i;
+
   blocks = /^ul|ol|p$/i;
+
   content = /\S|^\n$/;
+
   _ref = "LI P".split(/\s+/);
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     tag = _ref[_i];
     containers[tag] = true;
   }
+
   Swimlane.copacetic = function(body) {
     var iter;
     iter = body.firstChild;
@@ -344,28 +355,27 @@
     }
     return true;
   };
+
   hasTextAfter = function(node) {
     var next;
     next = node.nextSibling;
     while (next && next.nodeType === 3) {
-      if (next.data.length !== 0) {
-        return true;
-      }
+      if (next.data.length !== 0) return true;
       next = next.nextSibling;
     }
     return false;
   };
+
   hasTextBefore = function(node) {
     var prev;
     prev = node.previousSibling;
     while (prev && prev.nodeType === 3) {
-      if (prev.data.length !== 0) {
-        return true;
-      }
+      if (prev.data.length !== 0) return true;
       prev = prev.previousSibling;
     }
     return false;
   };
+
   validators = {
     p: function(para) {
       var endsWithSpace, iter, _results;
@@ -433,6 +443,7 @@
     },
     "@": function(e) {}
   };
+
   advance = function(iter, next) {
     if (next === iter) {
       return next.nextSibling;
@@ -440,6 +451,7 @@
       return next;
     }
   };
+
   normalizers = {
     p: function(factory, para, cursor) {
       var after, before, block, child, iter, next, parent, prev;
@@ -460,9 +472,7 @@
             parent.insertBefore(block, before);
             while (true) {
               after = prev === null ? para.firstChild : prev.nextSibling;
-              if (after === null) {
-                break;
-              }
+              if (after === null) break;
               parent.insertBefore(para.removeChild(after), before);
             }
             next = block;
@@ -479,9 +489,7 @@
           iter = remove(iter);
         }
       }
-      if (next === null) {
-        next = para.nextSibling;
-      }
+      if (next === null) next = para.nextSibling;
       trim(factory, para);
       return next;
     },
@@ -494,9 +502,7 @@
     "@": function(factory, node, cursor) {
       var next;
       next = node.firstChild || node.nextSibling;
-      if (cursor.node === node) {
-        cursor.node = next;
-      }
+      if (cursor.node === node) cursor.node = next;
       while (node.firstChild) {
         $(node.firstChild).insertBefore(node);
       }
@@ -510,9 +516,7 @@
         node.removeChild(node.firstChild);
       }
       if ($(node).hasClass("__swimlane__placeholder")) {
-        if (hasTextBefore(node) || hasTextAfter(node)) {
-          $(node).remove();
-        }
+        if (hasTextBefore(node) || hasTextAfter(node)) $(node).remove();
       } else if (!hasTextBefore(node)) {
         $(node).remove();
       }
@@ -522,6 +526,7 @@
       return node.parentNode.removeChild(node);
     }
   };
+
   trim = function(factory, node) {
     var children, first, last, str, text;
     children = node.childNodes;
@@ -555,10 +560,9 @@
         break;
       }
     }
-    if (children.length === 0) {
-      return node.parentNode.removeChild(node);
-    }
+    if (children.length === 0) return node.parentNode.removeChild(node);
   };
+
   wrap = function(factory, node, tag) {
     var newline, wrapper;
     if (node.previousSibling !== null && node.previousSibling.nodeType !== 3) {
@@ -570,6 +574,7 @@
     wrapper.appendChild(node);
     return wrapper;
   };
+
   text = function(factory, node, cursor) {
     var parentNode, prev;
     parentNode = node.parentNode;
@@ -577,9 +582,7 @@
       text = factory.createTextNode(node.data);
       parentNode.insertBefore(text, node);
       parentNode.removeChild(node);
-      if (cursor.node === node) {
-        cursor.node = text;
-      }
+      if (cursor.node === node) cursor.node = text;
       node = text;
     }
     if (node.nodeType === 3) {
@@ -602,15 +605,14 @@
     }
     return node;
   };
+
   Swimlane.normalize = function(factory, body, start, stop) {
     var append, cursor, iter, next, prev;
     cursor = (new Cursor).update();
     iter = start ? start.nextSibling : body.firstChild;
     append = null;
     stop || (stop = null);
-    if (iter && iter === stop) {
-      stop = stop.nextSibling;
-    }
+    if (iter && iter === stop) stop = stop.nextSibling;
     while (iter !== stop) {
       if ((iter = text(factory, iter, cursor)).nodeType === 3) {
         if (iter.data !== "\n") {
@@ -653,9 +655,7 @@
         iter = self.remove(iter);
       }
     }
-    if (append !== null) {
-      normalizers["p"](factory, append, cursor);
-    }
+    if (append !== null) normalizers["p"](factory, append, cursor);
     if (cursor.node && $.browser.msie) {
       while (cursor.node.nodeType === 3) {
         prev = cursor.node.previousSibling;
@@ -668,9 +668,7 @@
     }
     return cursor;
   };
-    if ((_ref2 = window.Swimlane) != null) {
-    _ref2;
-  } else {
-    window.Swimlane = Swimlane;
-  };
+
+  if (window.Swimlane == null) window.Swimlane = Swimlane;
+
 }).call(this);
