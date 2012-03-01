@@ -1,4 +1,4 @@
-Verity(function () {
+$(function () {
   module("ui()");
 
   $.fn.extend({
