@@ -3,6 +3,7 @@
 
 # Make sure we have a console even if Firebug is not open.
 console = window.console or { log: -> true }
+say = (splat...) -> console.log.apply console, splat
 
 # The `Swimlane` class and namespace for helper functions and classes.
 class Swimlane
@@ -12,11 +13,10 @@ class Swimlane
     # so they can be bound and unbound with toggle, hopefully avoiding IE leaks.
     @rebind = {}
     for event in  "keyup keydown keypress paste".split /\s/
-      @rebind[event] = (e)=> this[event](e)
+      do (event) => @rebind[event] = (e)=> this[event](e)
 
   # Enable or disable the Swimlane editor.
   toggle: ->
-
     editor  = $(@selector)
     node    = editor[0]
     value   = editor.attr("contentEditable")

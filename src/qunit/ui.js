@@ -1,9 +1,10 @@
-Verity(function () {
+$(function () {
   module("ui()");
 
   $.fn.extend({
     type: function(options) {
       return this.each(function() {
+        console.log(options);
         $(this).simulate("keydown", options || {});
         if (options.keyCode != 13 || $.browser.mozilla) {
           $(this).simulate("keypress", options || {});
@@ -44,7 +45,7 @@ Verity(function () {
     $(".visible-editor").remove();
   }
 
-  function  typeAndSee(name, chars, leave) {
+  function typeAndSee(name, chars, leave) {
     var swimlane = setup(name);
     try {
       swimlane.toggle();
