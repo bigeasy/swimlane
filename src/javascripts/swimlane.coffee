@@ -40,10 +40,7 @@ class Swimlane
       # If there is no content, if the div is an empty div, insert a paragraph
       # with a placeholder child node to keep the paragraph from collapsing.
       if not node.firstChild or characterCount(node.firstChild) is 0
-        if ($.browser.msie)
-          editor.append("<p><span class='__swimlane__placeholder'></span></p>")
-        else
-          editor.append("<p><br class='__swimlane__placeholder'></p>")
+        editor.append("<p><br class='__swimlane__placeholder'></p>")
 
       # Descend into the editor's children looking for the the first element
       # with a text node as a first child.
@@ -55,13 +52,12 @@ class Swimlane
       # If we didn't find a text node, add one.
       if !node.firstChild || node.firstChild != 3
         text = node.insertBefore(document.createTextNode(""), node.firstChild)
-        if !$.browser.msie
-          node = text
+        node = text
 
       # If we are in W3C browser, move to the text node, but FIXME. We really
       # need to defer to the `Cursor` implementation, and not have cursor
       # details leak out into the rest of the code.
-      if !$.browser.msie && node.firstChild
+      if node.firstChild
         node = node.firstChild
 
       # Select the node.
@@ -110,8 +106,7 @@ class Swimlane
   keypress: (e) ->
     console.log "PRESS: #{e.keyCode}, #{e.charCode}, #{e.which}, #{e.altKey}, #{e.metaKey}, #{e.ctrlKey}"
 
-    # Sort out the cross-broswer character code muddle.
-    charCode  = if $.browser.msie then e.keyCode else e.charCode
+    charCode  = e.charCode
 
     # For printable characters, insert the text at the cursor.
     if       charCode >= 0x20                     and
@@ -130,15 +125,10 @@ class Swimlane
       node    = document.createElement(cursor.block.tagName)
 
       if (cursor.offset == characterCount(cursor.node))
-        if ($.browser.msie)
-          selected = $("<span class='__swimlane__placeholder'></span>").appendTo(node)
-          $(node).insertAfter(cursor.block)
-          cursor.select(selected[0], 0)
-        else
-          node.appendChild(document.createTextNode(""))
-          selected = $("<br class='__swimlane__placeholder'>").appendTo(node)
-          $(node).insertAfter(cursor.block)
-          cursor.select(node, 0)
+        node.appendChild(document.createTextNode(""))
+        selected = $("<br class='__swimlane__placeholder'>").appendTo(node)
+        $(node).insertAfter(cursor.block)
+        cursor.select(node, 0)
 
       # A not too difficult split of a top level block.
       else if (containers[cursor.block.tagName])
@@ -150,7 +140,7 @@ class Swimlane
     console.log "UP: #{e.keyCode}, #{e.altKey}, #{e.metaKey}, #{e.ctrlKey}"
     if e.keyCode is 13
       e.preventDefault()
-    if $.browser.msie || e.keyCode != 13
+    if e.keyCode != 13
       editable = $(@selector)[0]
       try
         Swimlane.copacetic(editable)
@@ -201,140 +191,78 @@ characterCount = (node) ->
 #
 # ------------------------------------------------------------------------------
 
-# The class implementation is browser specific.
-if $.browser.msie
+# The W3C Selection Cursor class.
+class Cursor
 
-#### Cursor Management for Internet Explorer
-#
-# ------------------------------------------------------------------------------
+  # Intialize this cursor with the current position and return `this` cursor.
+  update: ->
+    selection   = window.getSelection()
+    node        = selection.focusNode
 
-  # The Internet Explorer Cursor class.
-  class Cursor
-    constructor: ->
-      @count = 0
-      @read()
-    read: ->
-      @count++
-      selection = document.selection
-      range = selection.createRange()
-      node = range.parentElement()
-      range.pasteHTML("<span id='__swimlane__" +  count + "'></span>")
-      iterator = $("#__swimlane__" + count).get(0)
+    @node       = node
+    @offset     = selection.focusOffset
+    @selection  = selection
+    @block      = if node then node.parentNode else null
+
+    this
+
+  select: (node, offset) ->
+    [@node, @offset] = [node, offset] if node? and offset?
+
+    window.getSelection().collapse(@node, @offset)
+
+    this
+
+  enter: ->
+    if @offset is characterCount(@node)
+    else if containers[@block.tagName]
+      split = document.createElement(@block.tagName)
+      next = @node.splitText(@offset)
+      @node = next
       @offset = 0
       loop
-        iterator = iterator.previousSibling
-        if !iterator || !(iterator.nodeType == 3 || iterator.nodeType == 4)
-          break
-      @offset += iterator.data.length
-      @node =  range.parentElement()
-      @offset = offset
-      @selection = selection
-      @range = range
-      @block = range.parentElement()
-      this
-    append: (text) ->
-      range = document.selection.createRange()
-      rect  = range.getBoundingClientRect()
-      range.text = text
-      this
-    select: (node, offset) ->
-      @node   = node if node
-      @offset = offset if offset
-      range = document.body.createTextRange()
-      if @offset == 0
-        document.body.focus()
-        offset = $(@node).offset()
-        # range.moveToPoint(offset.left, offset.top)
-        range.moveToElementText(@node)
-        range.move("character", @offset + 1)
-        range.move("character", @offset - 1)
-        range.collapse()
-         #range.move("character", cursor.offset);
-      else
-        range.moveToElementText(@node)
-        range.collapse()
-        range.move("character", @offset)
-      range.select()
-      this
-else
+        insert = next
+        next = next.nextSibling
+        split.appendChild(insert)
+        break if not next
+      $(split).insertAfter(@block)
+      @select()
+    this
 
-#### Cursor Management for W3C Select Compliant Browsers
-#
-# ------------------------------------------------------------------------------
+  append: (text) ->
+    if (!@selection.isCollapsed)
+      @collapse()
+    @textNodeZoom(this)
 
+    # FIXME Is this working anymore?
+    if @node.data.length == 0   and
+       @node.previousSibling    and
+       $(@node.previousSibling).hasClass("__swimlane__placeholder")
+      $(@node.previousSibling).remove()
 
-  # The W3C Selection Cursor class.
-  class Cursor
+    if (@node.data.length != @offset)
+      data    = @node.data
+      before  = data.substring(0, @offset)
+      after   = data.substring(@offset)
+      @node.data = "#{before}#{text}#{after}"
+    else
+      if not @node.nextSibling and text is " "
+        text = "\u00A0"
+      @node.data += text
 
-    # Intialize this cursor with the current position and return `this` cursor.
-    update: ->
-      selection   = window.getSelection()
-      node        = selection.focusNode
+    @offset++
 
-      @node       = node
-      @offset     = selection.focusOffset
-      @selection  = selection
-      @block      = if node then node.parentNode else null
+    this
 
-      this
-
-    select: (node, offset) ->
-      [@node, @offset] = [node, offset] if node? and offset?
-
-      window.getSelection().collapse(@node, @offset)
-
-      this
-
-    enter: ->
-      if @offset is characterCount(@node)
-      else if containers[@block.tagName]
-        split = document.createElement(@block.tagName)
-        next = @node.splitText(@offset)
-        @node = next
-        @offset = 0
-        loop
-          insert = next
-          next = next.nextSibling
-          split.appendChild(insert)
-          break if not next
-        $(split).insertAfter(@block)
-        @select()
-      this
-
-    append: (text) ->
-      if (!@selection.isCollapsed)
-        @collapse()
-      @textNodeZoom(this)
-
-      # FIXME Is this working anymore?
-      if @node.data.length == 0   and
-         @node.previousSibling    and
-         $(@node.previousSibling).hasClass("__swimlane__placeholder")
-        $(@node.previousSibling).remove()
-
-      if (@node.data.length != @offset)
-        data    = @node.data
-        before  = data.substring(0, @offset)
-        after   = data.substring(@offset)
-        @node.data = "#{before}#{text}#{after}"
-      else
-        if not @node.nextSibling and text is " "
-          text = "\u00A0"
-        @node.data += text
-
-      @offset++
-
-      this
-
-    # If the cursor's current node is an element, create an empty string text node
-    # and make it the first child of the element, and the focus node of the
-    # cursor.
-    textNodeZoom: (cursor) ->
-      if @node.nodeType is 1
-        text = document.createTextNode("")
-        cursor.node = @node.insertBefore text, @node.firstChild
-        cursor.offset = 0
-      this
+  # If the cursor's current node is an element, create an empty string text node
+  # and make it the first child of the element, and the focus node of the
+  # cursor.
+  textNodeZoom: (cursor) ->
+    if @node.nodeType is 1
+      text = document.createTextNode("")
+      cursor.node = @node.insertBefore text, @node.firstChild
+      cursor.offset = 0
+    this
 
 
 containers  = {}
@@ -627,13 +555,6 @@ Swimlane.normalize = (factory, body, start, stop) ->
   if append != null
       normalizers["p"](factory, append, cursor)
 
-  if cursor.node && $.browser.msie
-    while cursor.node.nodeType == 3
-      prev = cursor.node.previousSibling
-      while prev
-        cursor.offset += characterCount(prev)
-        prev = prev.previousSibling
-      cursor.node = cursor.node.parentNode
   cursor
 
 window.Swimlane ?= Swimlane

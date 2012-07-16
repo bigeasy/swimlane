@@ -1,1 +1,23 @@
-{ "name": "swimlane" }
+{ "name": "swimlane"
+, "description": "A visual markdown editor."
+, "author": "Alan Gutierrez"
+, "version": "0.0.0"
+, "keywords": [ "markdown", "html5", "text", "cms" ]
+, "licenses": [
+  { "type": "MIT"
+  , "url": "http://github.com/bigeasy/swimlane/raw/master/LICENSE"
+  }]
+, "repository":
+  { "type": "git"
+  , "url": "http://github.com/bigeasy/swimlane.git"
+  }
+, "scripts" : { "test": "proof platform win32 && proof t/*/*.t || t/test" }
+, "devDependencies":
+  { "proof": "0.0.15"
+  , "uglify-js": "~1.3"
+  }
+, "dependencies":
+  { "connect": "~2.0"
+  }
+, "bin": { "swimlane": "./bin/swimlane" }
+}
