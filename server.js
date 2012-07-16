@@ -1,1 +1,6 @@
-require("./lib/swimlane").server.listen(8386);
+var connect = require("connect");
+
+var app = connect()
+  .use(connect.logger())
+  .use(connect.static(process.argv[2]))
+  .listen(8386);
