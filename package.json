@@ -1,7 +1,7 @@
 { "name": "swimlane"
 , "description": "A visual markdown editor."
 , "author": "Alan Gutierrez"
-, "version": "0.0.0"
+, "version": "0.0.1"
 , "keywords": [ "markdown", "html5", "text", "cms" ]
 , "licenses": [
   { "type": "MIT"
@@ -19,5 +19,4 @@
 , "dependencies":
   { "connect": "~2.0"
   }
-, "bin": { "swimlane": "./bin/swimlane" }
 }
