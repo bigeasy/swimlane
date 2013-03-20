@@ -1,0 +1,67 @@
+<html>
+<head>
+  <title>Swimlane Test Suite</title>
+  <link rel="stylesheet" href="stylesheets/qunit.css" type="text/css" media="screen">
+  <script type="text/javascript" src="javascripts/jquery.js"></script>
+  <script type="text/javascript" src="javascripts/qunit.js"></script>
+  <script type="text/javascript" src="javascripts/swimlane.js"></script>
+  <script type="text/javascript" src="javascripts/compare.js"></script>
+  <script type="text/javascript" src="qunit/copacetic.js"></script>
+  <script type="text/javascript" src="qunit/normalize.js"></script>
+  <style>
+    #abnormal, #normal {
+      display: none;
+    }
+    #comparisons {
+      border: 3px solid #ccc;
+      margin: 30px;
+      padding: 5px 30px;
+      display: none;
+    }
+    #comparisons pre {
+      border: 1px dashed black;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="qunit-header">Swimlane Test Suite</h1>
+  <h2 id="qunit-banner"></h2>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="abnormal">
+    <div class="unwrapped">
+      This text is unwrapped.
+    </div>
+    <div class="strong">
+      This <strong>text</strong> is unwrapped.
+    </div>
+    <div class="unknown-nested-tag"><p>This text has an <span>invalid</span> tag.</p></div>
+    <div class="leading-white"><p> This text has leading whitespace.</p></div>
+    <div class="empty-span"><p>This text has <span></span>an empty span.</p></div>
+    <div class="top-empty-span">This text has <span></span>an empty span.</div>
+    <div class="br-at-start"><p><br>a</p></div>
+    <div class="br-at-end"><p>a<br class="__swimlane__placeholder"></p></div>
+    <div class="placeholder-span-with-text"><p><span class="__swimlane__placeholder">a</span></p></div>
+    <div class="placeholder-span-without-text"><p><span></span><span class="__swimlane__placeholder"></span></p></div>
+    <div class="moves-span-into-paragraph"><span>a</span></div>
+  </div>
+  <div id="normal">
+    <div class="trailing-white"><p>This text has trailing whitespace. </p></div>
+    <div class="unwrapped"><p>This text is unwrapped.</p></div>
+    <div class="strong"><p>This <strong>text</strong> is unwrapped.</p></div>
+    <div class="em"><p>This <em>text</em> is unwrapped.</p></div>
+    <div class="br"><p>This text has a<br>break.</p></div>
+    <div class="empty-span"><p>This text has an empty span.</p></div>
+    <div class="top-empty-span"><p>This text has an empty span.</p></div>
+    <div class="placeholder-br"><p><br></p></div>
+    <div class="br-at-start"><p>a</p></div>
+    <div class="br-at-end"><p>a</p></div>
+    <div class="placeholder-span-with-text"><p>a</p></div>
+    <div class="placeholder-span-without-text"><p><span class="__swimlane__placeholder"></span></p></div>
+    <div class="moves-span-into-paragraph"><p>a</p></div>
+  </div>
+  <div id="comparisons">
+  </div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->

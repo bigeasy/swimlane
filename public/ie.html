@@ -1,0 +1,66 @@
+<html>
+<head>
+<title>IE JavaScript Explorer</title>
+<script src="jquery.js"></script>
+<script>
+var functions = [];
+
+setTimeout(function () {
+  setInterval(function () {
+    if (functions.length != 0) {
+      functions.shift()();
+    }
+  }, 1000);
+}, 3000);
+
+
+var textRangeCursor = (function () {
+  var count = 0;
+  return function () {
+    var range = document.selection.createRange();
+    var node = range.parentElement();
+    range.pasteHTML("<span id='__swimlane__" +  count + "'></span>");
+    var iterator = $("#__swimlane__" + count).get(0);
+    var offset = 0;
+    for (;;) {
+      var iterator = iterator.previousSibling;
+      if (!iterator || !(iterator.nodeType == 3 || iterator.nodeType == 4)) {
+        break;
+      }
+      offset += iterator.data.length;
+    }
+    return {
+      node: range.parentElement(),
+      offset: offset
+    }
+  }
+})();
+
+functions.push(function () {
+/*
+  var cursor = textRangeCursor();
+  alert("node: " + cursor.node + ", offset: " + cursor.offset);
+  */
+  var cursor = { node: $("#e p")[0], offset: 5 };
+  var range = document.body.createTextRange();
+  range.moveToElementText(cursor.node);
+  range.collapse();
+  range.move("character", cursor.offset);
+  range.select();
+/* var range = document.selection.createRange();
+  range.moveEnd("character");
+  range.select();
+  range.move("character");
+  range.collapse(false);
+  range.select(); */
+//  p.createTextRange().select();
+});
+</script>
+</head>
+<body>
+<div contentEditable id="e">
+<p>This is a test.</p>
+</div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->

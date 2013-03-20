@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Swimlane Demonstration</title>
+<style type="text/css">
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #f0f0f0;
+    text-align: center;
+  }
+  #content {
+    margin: auto auto;
+    text-align: left;
+    width: 400px;
+  }
+  #swimlane {
+    padding: 6px;
+  }
+  #swimlane[contentEditable="true"] {
+    padding: 5px;
+    border: 1px solid red;
+  }
+</style>
+<link href="toolbar.css" type="text/css" rel="stylesheet">
+<script src="jquery.js"></script>
+<script src="../lib/swimlane.js"></script>
+<script type="text/javascript">
+  function path (prefix) {
+    if (!$.browser.msie) {
+      var path = [];
+      var anchor =  window.getSelection().anchorNode.parentNode;
+      var isSwimlane = $("#swimlane")[0] == anchor;
+      while (anchor != null) {
+        path.push(anchor.tagName);
+        anchor = anchor.parentNode; 
+      }
+      path.reverse();
+      $("<div>" + prefix + " : " + isSwimlane + " : " + path.join(" &raquo; ") + "</div>").appendTo("#path");
+    }
+  }
+  $(function () {
+    var swimlane = new Swimlane("#swimlane");
+    $("#toggle").click(function () {
+      swimlane.toggle();
+      $("#swimlane").focus();
+      return false;
+    });
+    $("#insert").click(function () {
+      document.execCommand("insertParagraph", false, null);
+    });
+    $("#show").click(function (e) {
+      var editable = $("#swimlane");
+      $("#html").text($("#swimlane").html());  
+    });
+    $("#swimlane").keyup(function (e) {
+      var editable = $("#swimlane");
+      setTimeout(function () { path("tick") }, 1);
+      $("#html").text($("#swimlane").html());  
+    });
+    $(".toolbar .button.bold").click(function () {
+      swimlane.command("bold");
+    });
+    $(".toolbar .button.italic").click(function () {
+      swimlane.command("italic");
+    });
+  });
+</script>
+</head>
+<body>
+<div id="content">
+<div class="toolbar">
+  <a href="#" class="button bold"><span>Bold</span></a> 
+  <a href="#" class="button italic"><span>Italic</span></a> 
+  <div class="separator"></div>
+  <a href="#" class="button blockquote"><span>Blockquote</span></a> 
+  <div class="clear"></div>
+</div>
+Content immediately before.  <a id="toggle" href="#">Toggle</a>. <a href="#" id="show">Show</a>.
+<div id="swimlane"><p></p></div>
+Content immediately after.
+<pre id="html">
+</pre>
+<div id="path">
+</div>
+</div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->

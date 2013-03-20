@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Swimlane UI Test Suite</title>
+  <link rel="stylesheet" href="stylesheets/qunit.css" type="text/css" media="screen">
+  <script type="text/javascript" src="javascripts/jquery.js"></script>
+  <script type="text/javascript" src="javascripts/jquery.simulate.js"></script>
+  <script type="text/javascript" src="javascripts/qunit.js"></script>
+  <script type="text/javascript" src="javascripts/swimlane.js"></script>
+  <script type="text/javascript" src="javascripts/compare.js"></script>
+  <script type="text/javascript" src="qunit/ui.js"></script>
+  <style>
+    #input > div, #output {
+      display: none;
+    }
+    #comparisons {
+      border: 3px solid #ccc;
+      margin: 30px;
+      padding: 5px 30px;
+      display: none;
+    }
+    #comparisons pre {
+      border: 1px dashed black;
+    }
+    #input > div.visible-editor {
+      position: absolute;
+      top: 60px;
+      right: 30px;
+      background: white;
+      border: 5px solid #ccc;
+      width: 300px;
+      padding: 6px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="qunit-header">Swimlane UI Test Suite</h1>
+  <h2 id="qunit-banner"></h2>
+  <h2 id="qunit-userAgent"></h2>
+  <ol id="qunit-tests"></ol>
+  <div id="input">
+    <div class="start-with-para"><p></p></div>
+    <div class="single-character"></div>
+    <div class="two-characters"></div>
+    <div class="many-characters"></div>
+    <div class="space-at-end"></div>
+    <div class="create-swimlane"><p></p></div>
+    <div class="two-paragraphs"></div>
+    <div class="insert-single-character"></div>
+    <div class="break-block"></div>
+    <div class="single-space"></div>
+  </div>
+  <div id="output">
+    <div class="start-with-para"><p>a</p></div>
+    <div class="single-character"><p>a</p></div>
+    <div class="two-characters"><p>ab</p></div>
+    <div class="many-characters"><p>abc</p></div>
+    <div class="space-at-end"><p>a&nbsp;</p></div>
+    <div class="two-paragraphs"><p>a</p><p>b</p></div>
+    <div class="insert-single-character"><p>acb</p></div>
+    <div class="break-block"><p>ab</p><p>c</p></div>
+    <div class="single-space"><p>a b</p></div>
+  </div>
+  <div id="comparisons">
+  </div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 nowrap: -->
